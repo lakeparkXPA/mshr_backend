@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-rv^0o))u(ir#e4870x!=_(w3r4yu3o9pq1x&%58p8x&0p84x0r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'admin_api',
 ]
 
 MIDDLEWARE = [
@@ -72,12 +74,26 @@ WSGI_APPLICATION = 'mshr_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+DATABASE_ROUTERS = [
+    'admin_api.dbrouter.MultiDBRouter',
+]
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'django',
+        'USER': 'admin',
+        'PASSWORD': 'docl2021!',
+        'HOST': 'docl-test.clmrmnvcroxg.ap-northeast-2.rds.amazonaws.com',
+        'PORT': '3306',
+    },
+    'bom': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'bom_dev',
+        'USER': 'admin',
+        'PASSWORD': 'docl2021!',
+        'HOST': 'docl-test.clmrmnvcroxg.ap-northeast-2.rds.amazonaws.com',
+        'PORT': '3306',
+    },
 }
 
 
