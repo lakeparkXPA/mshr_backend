@@ -16,7 +16,6 @@ class Area(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'area'
 
 
@@ -39,7 +38,6 @@ class Checkup(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'checkup'
 
 
@@ -50,7 +48,6 @@ class CommuneClinic(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'commune_clinic'
 
 
@@ -61,7 +58,6 @@ class District(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'district'
 
 
@@ -82,7 +78,6 @@ class Graduate(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'graduate'
 
 
@@ -93,24 +88,23 @@ class Log(models.Model):
     log_type = models.CharField(max_length=255, blank=True, null=True)
     log_content = models.CharField(max_length=100, blank=True, null=True)
     ip = models.CharField(max_length=50, blank=True, null=True)
+    user_name = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'log'
 
 
 class Notice(models.Model):
     notice_id = models.AutoField(primary_key=True)
     user_fk = models.ForeignKey('User', models.DO_NOTHING, db_column='user_fk', blank=True, null=True)
-    user_id = models.CharField(max_length=50)
+    user_name = models.CharField(max_length=50, blank=True, null=True)
     title = models.CharField(max_length=255)
     field = models.TextField()
     create_time = models.DateTimeField()
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'notice'
 
 
@@ -120,7 +114,6 @@ class NoticeFile(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'notice_file'
 
 
@@ -130,7 +123,6 @@ class Province(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'province'
 
 
@@ -149,7 +141,6 @@ class School(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'school'
 
 
@@ -170,7 +161,6 @@ class Student(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'student'
 
 
@@ -188,5 +178,4 @@ class User(models.Model):
 
     class Meta:
         managed = False
-        app_label = "bom"
         db_table = 'user'
