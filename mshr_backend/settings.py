@@ -9,10 +9,10 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+import datetime
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -21,11 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-rv^0o))u(ir#e4870x!=_(w3r4yu3o9pq1x&%58p8x&0p84x0r'
-
+ALGORITHM = 'HS256'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['13.125.225.181']
 
 
 # Application definition
@@ -37,7 +37,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'admin_api.apps.AdminApiConfig',
+    'rest_framework',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES' :[
+        'rest_framework.permissions.IsAuthenticated', # 인증된 사용자만 접근 가능
+        'admin_api.permissions.IsMaster', # master
+        'admin_api.permissions.IsProvince', # province
+        'admin_api.permissions.IsDistrict',  # province
+        'admin_api.permissions.IsCommune',  # province
+        'admin_api.permissions.IsSchool',  # province
+        'rest_framework.permissions.AllowAny', # 누구나 접근 가능
+
+        #추가 수정 예정
+    ],
+
+
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -75,8 +94,12 @@ WSGI_APPLICATION = 'mshr_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'bom_dev',
+        'USER': 'admin',
+        'PASSWORD' : 'docl2021!',
+        'HOST' : 'docl-test.clmrmnvcroxg.ap-northeast-2.rds.amazonaws.com',
+        'PORT' : 3306
     }
 }
 
