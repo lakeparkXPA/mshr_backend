@@ -31,13 +31,19 @@ def test(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllAuthenticated])
+@permission_classes([AllowAny])
 def refresh_token(request):
 
     '''
     토큰 재발급 API
     '''
     try:
+        # user_id = request.META.get('HTTP_USER_ID','')
+        # if not user_id:
+        #     raise exceptions.ValidationError
+        # obj = User.objects.get(user_id= user_id)
+
+
         obj = User.objects.get(user_id=request.data['user_id'])
         verified_token = RefreshTokenSerializer(obj).data['token']
 
@@ -53,12 +59,12 @@ def refresh_token(request):
 
                 client_decoded_token = jwt.decode(client_token,SECRET_KEY,ALGORITHM)
 
-                if decoded_token['auth'] == 'success' and \
-                    client_decoded_token['auth'] =='success' and \
+                if decoded_token['auth'] == 'refresh' and \
+                    client_decoded_token['auth'] =='refresh' and \
                         decoded_token == client_decoded_token:
 
                     payload = {}
-                    payload['auth'] = 'success'
+                    payload['auth'] = 'access'
 
                     payload['exp'] = datetime.datetime.utcnow() + \
                                     datetime.timedelta(hours=1)
@@ -71,7 +77,7 @@ def refresh_token(request):
                     return Response(data)
 
                 else:
-                    return Response('invalidated token', status=HTTP_401_UNAUTHORIZED)
+                    return Response('Error: invalidated token', status=HTTP_401_UNAUTHORIZED)
 
         except Exception as e:
             return Response('Error: ' + str(e),status=HTTP_400_BAD_REQUEST)
@@ -98,17 +104,17 @@ def login(request):
         if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:
 
             payload = {}
-            payload['auth'] = 'success'
+            payload['auth'] = 'access'
 
 
             payload['exp'] = datetime.datetime.utcnow() + \
-                             datetime.timedelta(hours=1)
+                             datetime.timedelta(hours=24)
 
             access_token = jwt.encode(payload,SECRET_KEY,ALGORITHM)
 
 
             refresh_payload ={}
-            refresh_payload['auth'] = 'success'
+            refresh_payload['auth'] = 'refresh'
 
             refresh_payload['exp'] = datetime.datetime.utcnow() + \
                                      datetime.timedelta(hours=24)
@@ -135,11 +141,12 @@ def login(request):
 
 
 
+
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def dashboard_filter(request):
     '''
-    대시보드 province, district 필터링
+    대시보드 province, district,school 필터링
     '''
     filter = request.POST.get('filter','')
     province = request.POST.get('province','')
@@ -149,43 +156,78 @@ def dashboard_filter(request):
     data = {}
 
     try:
-        obj = User.objects.get(user_id = request.POST.get('user_id'))
-        user = UserSerializer(obj).data
-        print(user)
+        user_level = User.objects.get(user_id = request.POST.get('user_id')).user_level
+        print(user_level)
+
     except exceptions as e:
         return JsonResponse(str(e), status=HTTP_400_BAD_REQUEST)
 
 
 
-    if filter == 'province' and (user['user_level'] is 0 or 1):
 
-        if province:
+
+    if filter == 'province' and (user_level is 0):
+
+        """Province 검색 할 경우"""
+
+        try:
             province_list = Province.objects.all().values('province')
             data['province'] = []
-            for order_list in province_list:
-                data['province'].append(order_list['province'])
 
-            print(data)
-        else:
+            for order_list in province_list:
+
+                data['province'].append(order_list['province'])
+                print(data)
+
+        except:
             raise exceptions.ValidationError
 
 
+    elif filter =='district' and (user_level in[0,1]):
+        """Province 검색 할 경우"""
 
-    elif filter =='district' and (user['user_level'] is 0 or 1):
+        if not province:
+            raise exceptions.ValidationError
+
+
         province_obj =Province.objects.\
                         prefetch_related('district_set').\
                         get(province=province)
 
         district_list = DistrictSerializer(province_obj.district_set.all(),many=True).data
 
+
         data['district'] = []
+
         for order_list in district_list:
             data['district'].append(order_list['district'])
-        print(data)
 
-    # elif filter == 'school'
+        if 1 in [1,2]:
+            print(True)
 
 
+    elif filter == 'school' and (user_level in [0,1,2,3]):
+        print()
+        if not province or not district:
+            raise exceptions.ValidationError
+
+
+        school_obj = School.objects.select_related('area_fk').\
+            select_related('area_fk__province_fk').\
+            select_related('area_fk__district_fk').\
+            filter(area_fk__province_fk__province=province,
+                   area_fk__district_fk__district=district).values('school_id','school_name')
+
+        data['schools'] = []
+
+        for obj in school_obj:
+            print(obj)
+            school_info = {}
+
+            school_info['school_name'] = obj['school_name']
+            school_info['school_id'] =obj['school_id']
+
+            data['schools'].append(school_info)
 
 
 

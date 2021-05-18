@@ -30,28 +30,31 @@ class DefaultAuthentication(authentication.BaseAuthentication):
 
         else:
             token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
-            if tokenverify(token):
+            if self.tokenverify(token):
                 #print("pass")
                 return (None, None)
             #토큰값이 다른경우
             else:
                 raise exceptions.AuthenticationFailed('No Authenticated')
 
+    def tokenverify(self,token):
+
+        try:
+
+            decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
+            if decoded_token['auth'] == 'access' or \
+                    decoded_token['auth'] == 'refresh':
+                return True
+            else:
+                return False
+        except:
+            raise exceptions.AuthenticationFailed('Token Expired')
 
 
 
 
-def tokenverify(token):
 
 
-    try:
-        decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
-        if decoded_token['auth'] == 'success':
-            return True
-        else:
-            return False
-    except:
-        raise exceptions.AuthenticationFailed('Token Expired')
 
 
 
@@ -65,10 +68,21 @@ class AllAuthenticated(permissions.BasePermission):
 
         else:
             token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
-            if tokenverify(token):
+            if self.tokenverify(token):
                 return True
             else:
                 return False
+
+    def tokenverify(self, token):
+
+        try:
+            decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
+            if decoded_token['auth'] == 'access':
+                return True
+            else:
+                return False
+        except:
+            raise exceptions.AuthenticationFailed('Token Expired')
 
 
 
