@@ -169,6 +169,7 @@ class User(models.Model):
     user_tel = models.CharField(max_length=30)
     user_mobile = models.CharField(max_length=30, blank=True, null=True)
     password = models.CharField(max_length=255)
+    token = models.CharField(max_length=255,blank=True,null=True)
 
     class Meta:
         managed = False

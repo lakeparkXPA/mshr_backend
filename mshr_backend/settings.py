@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 import datetime
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,30 +39,31 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'admin_api.apps.AdminApiConfig',
     'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES':[
+        'admin_api.permissions.DefaultAuthentication' # 커스텀 인증 클래스
+    ],
     'DEFAULT_PERMISSION_CLASSES' :[
-        'rest_framework.permissions.IsAuthenticated', # 인증된 사용자만 접근 가능
+        'admin_api.permissions.AllAuthenticated', # 인증 받은 모든 사용자
         'admin_api.permissions.IsMaster', # master
         'admin_api.permissions.IsProvince', # province
-        'admin_api.permissions.IsDistrict',  # province
-        'admin_api.permissions.IsCommune',  # province
-        'admin_api.permissions.IsSchool',  # province
-        'rest_framework.permissions.AllowAny', # 누구나 접근 가능
-
-        #추가 수정 예정
+        'admin_api.permissions.IsDistrict',  # district
+        'admin_api.permissions.IsCommune',  # commune
+        'admin_api.permissions.IsSchool',  # school
+        'rest_framework.permissions.AllowAny', # 인증 없이 접근 가능
     ],
 
 
 }
 
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

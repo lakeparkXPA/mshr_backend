@@ -4,5 +4,8 @@ from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token,verify_
 app_name= 'admin_api'
 
 urlpatterns=[
-    path('login/',views.login),
+    path('login',views.login),
+    path('dashboard/location',views.dashboard_filter),
+    path('refreshToken',views.refresh_token),
+    path('test',views.test)
 ]
