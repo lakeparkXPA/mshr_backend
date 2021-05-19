@@ -43,17 +43,9 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':[
-        'admin_api.permissions.DefaultAuthentication' # 커스텀 인증 클래스
-    ],
+
     'DEFAULT_PERMISSION_CLASSES' :[
         'admin_api.permissions.AllAuthenticated', # 인증 받은 모든 사용자
-        'admin_api.permissions.IsMaster', # master
-        'admin_api.permissions.IsProvince', # province
-        'admin_api.permissions.IsDistrict',  # district
-        'admin_api.permissions.IsCommune',  # commune
-        'admin_api.permissions.IsSchool',  # school
-        'rest_framework.permissions.AllowAny', # 인증 없이 접근 가능
     ],
 
 

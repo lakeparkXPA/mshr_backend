@@ -15,74 +15,30 @@ from admin_api.models import *
 
 
 
-class DefaultAuthentication(authentication.BaseAuthentication):
-    #www_authenticate_realm = 'api'
-
-    '''' 기본 인증 클래스 '''
 
 
-    def authenticate(self,request):
-
-        """None의경우 권한요청을 시도한것이 아님 . 로그인시"""
-
-        if request.META.get('HTTP_AUTHORIZATION') is None:
-            return None
-
-        else:
-            token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
-            if self.tokenverify(token):
-                #print("pass")
-                return (None, None)
-            #토큰값이 다른경우
-            else:
-                raise exceptions.AuthenticationFailed('No Authenticated')
-
-    def tokenverify(self,token):
-
-        try:
-
-            decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
-            if decoded_token['auth'] == 'access' or \
-                    decoded_token['auth'] == 'refresh':
-                return True
-            else:
-                return False
-        except:
-            raise exceptions.AuthenticationFailed('Token Expired')
-
-
-
-
-
-
-
-
-
-"""모든 권한 존재하는 계정 """
 
 class AllAuthenticated(permissions.BasePermission):
 
+    """모든 권한 존재하는 계정 """
+
     def has_permission(self, request, view):
         if request.META.get('HTTP_AUTHORIZATION') is None:
-            exceptions.AuthenticationFailed('No Authenticated')
-
+            return False
         else:
-            token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
-            if self.tokenverify(token):
-                return True
-            else:
+            auth = request.META.get('HTTP_AUTHORIZATION').split()
+            user_id = request.META.get('HTTP_USER_ID','')
+            if user_id is None:
                 return False
 
-    def tokenverify(self, token):
+            if len(auth) ==1:
+                raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
 
-        try:
-            decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
-            if decoded_token['auth'] == 'access':
-                return True
-            else:
-                return False
-        except:
-            raise exceptions.AuthenticationFailed('Token Expired')
+            elif len(auth) ==2:
+                if permission_check(user_id,0,1,2,3,4) and tokenverify(auth[1]):
+                    return True
+
+        return False
 
 
 
@@ -93,11 +49,20 @@ class IsMaster(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        user_id = request.META.get('HTTP_USER_ID','')
+        if request.META.get('HTTP_AUTHORIZATION') is None:
+            return False
+        else:
+            auth = request.META.get('HTTP_AUTHORIZATION').split()
+            user_id = request.META.get('HTTP_USER_ID','')
+            if user_id is None:
+                return False
 
-        if user_id:
-            if permission_check(user_id,0):
-                return True
+            if len(auth) ==1:
+                raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
+
+            elif len(auth) ==2:
+                if permission_check(user_id,0) and tokenverify(auth[1]):
+                    return True
 
         return False
 
@@ -107,11 +72,20 @@ class IsProvince(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        user_id = request.META.get('HTTP_USER_ID', '')
+        if request.META.get('HTTP_AUTHORIZATION') is None:
+            return False
+        else:
+            auth = request.META.get('HTTP_AUTHORIZATION').split()
+            user_id = request.META.get('HTTP_USER_ID','')
+            if user_id is None:
+                return False
 
-        if user_id:
-            if permission_check(user_id, 1):
-                return True
+            if len(auth) ==1:
+                raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
+
+            elif len(auth) ==2:
+                if permission_check(user_id,1) and tokenverify(auth[1]):
+                    return True
 
         return False
 
@@ -122,11 +96,20 @@ class IsDistrict(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        user_id = request.META.get('HTTP_USER_ID', '')
+        if request.META.get('HTTP_AUTHORIZATION') is None:
+            return False
+        else:
+            auth = request.META.get('HTTP_AUTHORIZATION').split()
+            user_id = request.META.get('HTTP_USER_ID','')
+            if user_id is None:
+                return False
 
-        if user_id:
-            if permission_check(user_id, 2):
-                return True
+            if len(auth) ==1:
+                raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
+
+            elif len(auth) ==2:
+                if permission_check(user_id,2) and tokenverify(auth[1]):
+                    return True
 
         return False
 
@@ -137,11 +120,20 @@ class IsCommune(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        user_id = request.META.get('HTTP_USER_ID', '')
+        if request.META.get('HTTP_AUTHORIZATION') is None:
+            return False
+        else:
+            auth = request.META.get('HTTP_AUTHORIZATION').split()
+            user_id = request.META.get('HTTP_USER_ID','')
+            if user_id is None:
+                return False
 
-        if user_id:
-            if permission_check(user_id, 3):
-                return True
+            if len(auth) ==1:
+                raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
+
+            elif len(auth) ==2:
+                if permission_check(user_id,3) and tokenverify(auth[1]):
+                    return True
 
         return False
 
@@ -152,24 +144,33 @@ class IsSchool(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        user_id = request.META.get('HTTP_USER_ID', '')
+        if request.META.get('HTTP_AUTHORIZATION') is None:
+            return False
+        else:
+            auth = request.META.get('HTTP_AUTHORIZATION').split()
+            user_id = request.META.get('HTTP_USER_ID','')
+            if user_id is None:
+                return False
 
-        if user_id:
-            if permission_check(user_id, 4):
-                return True
+            if len(auth) ==1:
+                raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
+
+            elif len(auth) ==2:
+                if permission_check(user_id,4) and tokenverify(auth[1]):
+                    return True
 
         return False
 
 
 
 
-def permission_check(user_id,level):
+def permission_check(user_id,*level):
 
     try:
-
         user_level = User.objects.get(user_id=user_id).user_level
 
-        if user_level==level:
+
+        if user_level in level:
             return True
         else:
             return False
@@ -178,7 +179,16 @@ def permission_check(user_id,level):
         raise exceptions.ValidationError
 
 
+def tokenverify(token):
 
+    try:
+        decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        if decoded_token['auth'] == 'access':
+            return True
+        else:
+            return False
+    except:
+        raise exceptions.AuthenticationFailed('Token Expired')
 
 
 
