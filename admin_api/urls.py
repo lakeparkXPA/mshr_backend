@@ -10,4 +10,5 @@ urlpatterns=[
     path('test',views.test),
     path('dashboard/notice',views.dashboard_notice_list),
     path('dashboard/notice/<int:notice_id>',views.dashboard_notice),
+    path('dashboard/notice/<int:notice_id>/<str:file_name>',views.dashboard_notice_img),
 ]

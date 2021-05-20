@@ -1,4 +1,4 @@
-
+from django.http import FileResponse
 from django.shortcuts import render
 from rest_framework.decorators import *
 from rest_framework.permissions import *
@@ -16,8 +16,8 @@ from django.contrib.auth import authenticate
 import datetime
 from rest_framework_jwt.views import obtain_jwt_token
 
-from mshr_backend.settings import ALGORITHM, SECRET_KEY
-
+from mshr_backend.settings import ALGORITHM, SECRET_KEY, BASE_DIR
+from mshr_backend.settings import STATIC_DIR
 
 
 @api_view(['POST','GET'])
@@ -287,3 +287,18 @@ def dashboard_notice(request,notice_id):
 
     return Response(notice)
 
+
+@api_view(['GET'])
+@permission_classes([AllAuthenticated])
+def dashboard_notice_img(request,notice_id,file_name):
+    """
+    공지사항 이미지 다운로드 API
+    """
+    try:
+        img = open(STATIC_DIR+f'/notice/{notice_id}/{file_name}','rb')
+
+    except:
+        raise exceptions.NotFound
+
+
+    return FileResponse(img,as_attachment=True)
