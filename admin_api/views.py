@@ -233,3 +233,28 @@ def dashboard_filter(request):
 
 
     return JsonResponse(data, status=HTTP_200_OK)
+
+
+
+@api_view(['GET'])
+@permission_classes([AllAuthenticated])
+def dashboard_notice_list(request):
+    """
+    공지사항 list 조회 api
+    """
+
+    try:
+        notice_obj = Notice.objects.all()
+        notice_serializer = NoticeListSerializer(notice_obj,many=True)
+
+        notice_list = {}
+        notice_list['notice'] = notice_serializer.data
+
+
+    except:
+        raise exceptions.ValidationError
+
+    return Response(notice_list)
+
+
+

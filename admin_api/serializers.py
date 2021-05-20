@@ -41,3 +41,9 @@ class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
         fields =  ['district']
+
+
+class NoticeListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notice
+        fields = ['notice_id','title','create_time']

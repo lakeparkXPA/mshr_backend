@@ -7,5 +7,6 @@ urlpatterns=[
     path('login',views.login),
     path('dashboard/location',views.dashboard_filter),
     path('refreshToken',views.refresh_token),
-    path('test',views.test)
+    path('test',views.test),
+    path('dashboard/notice',views.dashboard_notice_list)
 ]
