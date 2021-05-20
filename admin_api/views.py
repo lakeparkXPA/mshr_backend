@@ -347,39 +347,58 @@ def studentHealth_student_list(request):
         """유저가 확인 가능한 전체 조회할 경우"""
 
         if user_id:
-            user = User.objects.filter(user_id=user_id).\
-                    values('user_level','area_fk','school_fk')
+            user = User.objects.select_related('area_fk').filter(user_id=user_id).\
+                    values('user_level','area_fk','school_fk','area_fk__province_fk','area_fk__district_fk','area_fk__commune_clinic_fk')
+
 
             user = user[0]
 
+            try:
+                if user['user_level']==0:
 
-            if user['user_level']< 3:
-
-                """유저가 학교 계정이 아닌 지역계정 유저인경우"""
-                try:
-
-                    students_obj =Student.objects.select_related('school_fk').\
-                                    filter(school_fk__area_fk=user['area_fk'])
+                    """유저가 마스터 계정일경우"""
+                    students_obj = Student.objects.all()
 
 
-                except:
-                    raise exceptions.ValidationError
+                elif user['user_level']==1:
 
+                    """유저가 province계정 인 경우"""
 
-            elif user['user_level']==3:
-
-                """유저가 학교관리자 인 경우"""
-
-                try:
                     students_obj = Student.objects.select_related('school_fk').\
-                                    filter(school_fk__id=user['school_fk'])
-                except:
-                    raise exceptions.ValidationError
+                                        select_related('school_fk__area_fk').\
+                                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'])
 
-            student_serializer = StudentSerializer(students_obj, many=True)
-            student_list = student_serializer.data
-            data['students'] = student_list
+                elif user['user_level']==2:
+                    """유저가 district계정 인 경우"""
 
+                    students_obj = Student.objects.select_related('school_fk').\
+                                        select_related('school_fk__area_fk').\
+                                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
+                                               school_fk__area_fk__district_fk=user['area_fk__district_fk'])
+
+                elif user['user_level']==3:
+
+                    """유저가 commune_clinic 계정 인 경우"""
+
+                    students_obj = Student.objects.select_related('school_fk').\
+                                        select_related('school_fk__area_fk').\
+                                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
+                                               school_fk__area_fk__district_fk=user['area_fk__district_fk'],
+                                               school_fk__area_fk__commune_clinic_fk=user['area_fk__commune_clinic_fk'])
+
+                elif user['user_level']==4:
+
+                    students_obj= Student.objects.select_related('school_fk').\
+                                        filter(school_fk__id=user['school_fk'])
+
+
+                student_serializer = StudentSerializer(students_obj, many=True)
+                student_list = student_serializer.data
+                data['students'] = student_list
+
+
+            except:
+                raise exceptions.ValidationError
 
 
         else:
@@ -388,4 +407,11 @@ def studentHealth_student_list(request):
 
 
     return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_school_list(request):
+
+    user_id = request.POST.get('user_id','')
 
