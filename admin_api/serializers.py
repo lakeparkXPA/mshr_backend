@@ -71,3 +71,22 @@ class NoticeSerializer(serializers.ModelSerializer):
         fields = ['user_name','title','field']
 
 
+
+class StudentSerializer(serializers.ModelSerializer):
+    """
+    학생 리스트 조회시 사용
+    """
+    class Meta:
+        model = Student
+        fields = ['school_fk','student_id','student_name','date_of_birth',
+                  'gender','grade','grade_class','medical_insurance_number']
+    def to_representation(self, instance):
+        field_list = ('school_fk','student_id','student_name','date_of_birth',
+                  'gender','grade','grade_class','medical_insurance_number')
+
+        data = super().to_representation(instance)
+        for field in field_list:
+            if data[field] ==None:
+                data[field]=''
+
+        return data

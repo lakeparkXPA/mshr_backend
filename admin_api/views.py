@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
 from rest_framework.decorators import *
@@ -18,7 +19,7 @@ from rest_framework_jwt.views import obtain_jwt_token
 
 from mshr_backend.settings import ALGORITHM, SECRET_KEY, BASE_DIR
 from mshr_backend.settings import STATIC_DIR
-
+from admin_api.custom import *
 
 @api_view(['POST','GET'])
 @permission_classes([IsMaster])
@@ -302,3 +303,89 @@ def dashboard_notice_img(request,notice_id,file_name):
 
 
     return FileResponse(img,as_attachment=True)
+
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_student_list(request):
+
+    user_id = request.POST.get('user_id','')
+    school_id = request.POST.get('school_id','')
+    grade = request.POST.get('grade','')
+    name_id = request.POST.get('name_id','')
+
+
+    q = Q()
+    data = {}
+    """필터링 조건으로 조회할 경우"""
+    if school_id or grade or name_id:
+
+        if school_id:
+            q.add(Q(school_fk__id=school_id),q.AND)
+        if grade:
+            q.add(Q(grade=grade),q.AND)
+
+        if name_id:
+            q.add(Q(student_name=name_id) | Q(medical_insurance_number=name_id),q.AND)
+
+        try:
+            students_obj = Student.objects.select_related('school_fk').\
+                            filter(q)
+
+        except:
+            raise exceptions.ValidationError
+
+        student_serializer = StudentSerializer(students_obj,many=True)
+
+        student_list = student_serializer.data
+        data['students'] = student_list
+
+
+    else:
+
+        """유저가 확인 가능한 전체 조회할 경우"""
+
+        if user_id:
+            user = User.objects.filter(user_id=user_id).\
+                    values('user_level','area_fk','school_fk')
+
+            user = user[0]
+
+
+            if user['user_level']< 3:
+
+                """유저가 학교 계정이 아닌 지역계정 유저인경우"""
+                try:
+
+                    students_obj =Student.objects.select_related('school_fk').\
+                                    filter(school_fk__area_fk=user['area_fk'])
+
+
+                except:
+                    raise exceptions.ValidationError
+
+
+            elif user['user_level']==3:
+
+                """유저가 학교관리자 인 경우"""
+
+                try:
+                    students_obj = Student.objects.select_related('school_fk').\
+                                    filter(school_fk__id=user['school_fk'])
+                except:
+                    raise exceptions.ValidationError
+
+            student_serializer = StudentSerializer(students_obj, many=True)
+            student_list = student_serializer.data
+            data['students'] = student_list
+
+
+
+        else:
+            raise exceptions.ValidationError
+
+
+
+    return Response(data)
+
