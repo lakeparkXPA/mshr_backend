@@ -28,7 +28,7 @@ class Checkup(models.Model):
     systolic = models.FloatField(blank=True, null=True)
     diastolic = models.FloatField(blank=True, null=True)
     bust = models.FloatField(blank=True, null=True)
-    date = models.DateField()
+    date = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -78,7 +78,7 @@ class Graduate(models.Model):
 class Log(models.Model):
     user_fk = models.ForeignKey('User', models.DO_NOTHING, db_column='user_fk', blank=True, null=True)
     user_id = models.CharField(max_length=50)
-    log_time = models.DateTimeField()
+    log_time = models.DateTimeField(blank=True, null=True)
     log_type = models.CharField(max_length=255, blank=True, null=True)
     log_content = models.CharField(max_length=100, blank=True, null=True)
     ip = models.CharField(max_length=50, blank=True, null=True)
@@ -95,7 +95,7 @@ class Notice(models.Model):
     user_name = models.CharField(max_length=50, blank=True, null=True)
     title = models.CharField(max_length=255)
     field = models.TextField()
-    create_time = models.DateTimeField()
+    create_time = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False

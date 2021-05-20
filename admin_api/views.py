@@ -244,8 +244,8 @@ def dashboard_notice_list(request):
     """
 
     try:
-        notice_obj = Notice.objects.all()
-        notice_serializer = NoticeListSerializer(notice_obj,many=True)
+        notice_list_obj = Notice.objects.all()
+        notice_serializer = NoticeListSerializer(notice_list_obj,many=True)
 
         notice_list = {}
         notice_list['notice'] = notice_serializer.data
@@ -257,4 +257,33 @@ def dashboard_notice_list(request):
     return Response(notice_list)
 
 
+@api_view(['GET'])
+@permission_classes([AllAuthenticated])
+def dashboard_notice(request,notice_id):
+
+
+    """
+    공지사항 상세조회 api
+    """
+
+    try:
+
+        notice_obj = Notice.objects.prefetch_related('noticefile_set').\
+                                    get(notice_id=notice_id)
+
+        notice = NoticeSerializer(notice_obj).data
+        files = NoticeFileSerializer(notice_obj.noticefile_set.all(),many=True).data
+
+        file_list = []
+
+        for file in files:
+            file_list.append(file['file_name'])
+
+        notice['file_name'] = file_list
+
+    except:
+        raise exceptions.ValidationError
+
+
+    return Response(notice)
 

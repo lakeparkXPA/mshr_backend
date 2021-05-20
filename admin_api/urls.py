@@ -8,5 +8,6 @@ urlpatterns=[
     path('dashboard/location',views.dashboard_filter),
     path('refreshToken',views.refresh_token),
     path('test',views.test),
-    path('dashboard/notice',views.dashboard_notice_list)
+    path('dashboard/notice',views.dashboard_notice_list),
+    path('dashboard/notice/<int:notice_id>',views.dashboard_notice),
 ]

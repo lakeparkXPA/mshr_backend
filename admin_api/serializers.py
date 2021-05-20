@@ -43,7 +43,31 @@ class DistrictSerializer(serializers.ModelSerializer):
         fields =  ['district']
 
 
+class NoticeFileSerializer(serializers.ModelSerializer):
+    """
+    공지사항 파일 조회시 사용
+    """
+    class Meta:
+        model = NoticeFile
+        fields= ['file_name']
+
+
+
 class NoticeListSerializer(serializers.ModelSerializer):
+    """
+    공지사항 리스트 조회시 사용
+    """
     class Meta:
         model = Notice
         fields = ['notice_id','title','create_time']
+
+
+class NoticeSerializer(serializers.ModelSerializer):
+    """
+    공지사항 상세 조회시 사용
+    """
+    class Meta:
+        model =Notice
+        fields = ['user_name','title','field']
+
+
