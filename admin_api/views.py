@@ -20,7 +20,7 @@ from rest_framework_jwt.views import obtain_jwt_token
 from mshr_backend.settings import ALGORITHM, SECRET_KEY, BASE_DIR
 from mshr_backend.settings import STATIC_DIR
 from admin_api.custom import *
-
+from django.db import connection
 @api_view(['POST','GET'])
 @permission_classes([IsMaster])
 def test(request):
@@ -364,41 +364,87 @@ def studentHealth_student_list(request):
 
                     """유저가 province계정 인 경우"""
 
-                    students_obj = Student.objects.select_related('school_fk').\
-                                        select_related('school_fk__area_fk').\
-                                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'])
+
+
+                    """prefetch는 lazy하기때문에 미리 조인을 하지 않는다."""
+                    area_list = Area.objects.prefetch_related('school_set').prefetch_related('school_set__student_set').filter(province_fk=user['area_fk__province_fk'])
+                    #area_list에는 지금 1과 2 area_id를 가진 pk가 존재한다.
+
+                    """아래에는 복수개의 오브젝트가 담겨있는 queryset형태임
+                    쿼리셋을 반복 돌면서 참조해도 prefetch_related를 수행했기 때문에
+                    디비 참조가 연속해서 발생하지 않는다."""
+                    student_list = []
+
+                    for area in area_list:
+                        for school in area.school_set.all():
+                            student_serializer = StudentSerializer(school.student_set.all(),many=True).data
+                            student_list.append(student_serializer)
+
+                    data['students'] = student_list
+
+                    print(connection.queries)
+
+                    #print(str(schools.query))
 
                 elif user['user_level']==2:
-                    """유저가 district계정 인 경우"""
 
-                    students_obj = Student.objects.select_related('school_fk').\
-                                        select_related('school_fk__area_fk').\
-                                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
-                                               school_fk__area_fk__district_fk=user['area_fk__district_fk'])
+                    area_list = Area.objects.prefetch_related('school_set').\
+                                    prfetch_related('school_set__student_set').\
+                                    filter(province_fk=user['area_fk__province_fk'],
+                                            district_fk=user['area_fk__district_fk'])
+
+                    student_list = []
+
+                    for area in area_list:
+                        for school in area.school_set.all():
+                            student_serializer = StudentSerializer(school.student_set.all(),many=True).data
+                            student_list.append(student_serializer)
+
+                    data['students'] = student_list
+
+                    print(connection.queries)
 
                 elif user['user_level']==3:
 
                     """유저가 commune_clinic 계정 인 경우"""
 
-                    students_obj = Student.objects.select_related('school_fk').\
-                                        select_related('school_fk__area_fk').\
-                                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
-                                               school_fk__area_fk__district_fk=user['area_fk__district_fk'],
-                                               school_fk__area_fk__commune_clinic_fk=user['area_fk__commune_clinic_fk'])
+                    area_list = Area.objects.prefetch_related('school_set').\
+                                    prfetch_related('school_set__student_set').\
+                                    filter(province_fk=user['area_fk__province_fk'],
+                                            district_fk=user['area_fk__district_fk'],
+                                            commune_clinic_fk=user['area_fk__commune_clinic_fk'])
+
+                    student_list = []
+
+                    for area in area_list:
+                        for school in area.school_set.all():
+                            student_serializer = StudentSerializer(school.student_set.all(),many=True).data
+                            student_list.append(student_serializer)
+
+                    data['students'] = student_list
+
+                    print(connection.queries)
+
 
                 elif user['user_level']==4:
 
-                    students_obj= Student.objects.select_related('school_fk').\
-                                        filter(school_fk__id=user['school_fk'])
+                    student = Student.objects.select_related('school_fk').\
+                        filter(school_fk=user['school_fk'])
 
 
-                student_serializer = StudentSerializer(students_obj, many=True)
-                student_list = student_serializer.data
-                data['students'] = student_list
+                    student_list = []
+                    student_serializer = StudentSerializer(student.all(),many=True).data
+
+                    student_list.append(student_serializer)
+                    data['students'] = student_list
+
+                    print(connection.queries)
+
 
 
             except:
                 raise exceptions.ValidationError
+
 
 
         else:
