@@ -12,5 +12,5 @@ urlpatterns=[
     path('dashboard/notice/<int:notice_id>',views.dashboard_notice),
     path('dashboard/notice/<int:notice_id>/<str:file_name>',views.dashboard_notice_img),
     path('studentHealth/student/list',views.studentHealth_student_list),
-    #path('studentHealth/student/schoolList')
+    path('studentHealth/student/schoolList',views.studentHealth_school_list),
 ]

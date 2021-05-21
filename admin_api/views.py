@@ -347,17 +347,25 @@ def studentHealth_student_list(request):
         """유저가 확인 가능한 전체 조회할 경우"""
 
         if user_id:
-            user = User.objects.select_related('area_fk').filter(user_id=user_id).\
-                    values('user_level','area_fk','school_fk','area_fk__province_fk','area_fk__district_fk','area_fk__commune_clinic_fk')
+            user = User.objects.select_related('area_fk').\
+                                    filter(user_id=user_id).\
+                                    values('user_level','area_fk','school_fk',
+                                    'area_fk__province_fk','area_fk__district_fk',
+                                    'area_fk__commune_clinic_fk')[0]
 
-
-            user = user[0]
 
             try:
                 if user['user_level']==0:
 
                     """유저가 마스터 계정일경우"""
                     students_obj = Student.objects.all()
+                    student_list = []
+                    student_serializer = StudentSerializer(students_obj,many=True).data
+                    student_list.append(student_serializer)
+
+                    data['students']=student_list
+
+
 
 
                 elif user['user_level']==1:
@@ -366,13 +374,11 @@ def studentHealth_student_list(request):
 
 
 
-                    """prefetch는 lazy하기때문에 미리 조인을 하지 않는다."""
-                    area_list = Area.objects.prefetch_related('school_set').prefetch_related('school_set__student_set').filter(province_fk=user['area_fk__province_fk'])
-                    #area_list에는 지금 1과 2 area_id를 가진 pk가 존재한다.
+                    area_list = Area.objects.prefetch_related('school_set').\
+                                    prefetch_related('school_set__student_set').\
+                                    filter(province_fk=user['area_fk__province_fk'])
 
-                    """아래에는 복수개의 오브젝트가 담겨있는 queryset형태임
-                    쿼리셋을 반복 돌면서 참조해도 prefetch_related를 수행했기 때문에
-                    디비 참조가 연속해서 발생하지 않는다."""
+
                     student_list = []
 
                     for area in area_list:
@@ -382,9 +388,7 @@ def studentHealth_student_list(request):
 
                     data['students'] = student_list
 
-                    print(connection.queries)
 
-                    #print(str(schools.query))
 
                 elif user['user_level']==2:
 
@@ -402,7 +406,7 @@ def studentHealth_student_list(request):
 
                     data['students'] = student_list
 
-                    print(connection.queries)
+
 
                 elif user['user_level']==3:
 
@@ -423,13 +427,12 @@ def studentHealth_student_list(request):
 
                     data['students'] = student_list
 
-                    print(connection.queries)
 
 
                 elif user['user_level']==4:
 
                     student = Student.objects.select_related('school_fk').\
-                        filter(school_fk=user['school_fk'])
+                                    filter(school_fk=user['school_fk'])
 
 
                     student_list = []
@@ -438,7 +441,6 @@ def studentHealth_student_list(request):
                     student_list.append(student_serializer)
                     data['students'] = student_list
 
-                    print(connection.queries)
 
 
 
@@ -459,5 +461,69 @@ def studentHealth_student_list(request):
 @permission_classes([AllAuthenticated])
 def studentHealth_school_list(request):
 
+    """Student 학교 명단 조회 시 사용 API"""
     user_id = request.POST.get('user_id','')
 
+    try:
+
+        user = User.objects.select_related('area_fk'). \
+                filter(user_id__exact=user_id). \
+                values('user_level', 'area_fk', 'school_fk',
+                   'area_fk__province_fk', 'area_fk__district_fk',
+                   'area_fk__commune_clinic_fk')[0]
+    except:
+        raise exceptions.ValidationError
+
+
+    data = {}
+    try:
+
+
+        if user['user_level'] == 0:
+
+            schools_obj = School.objects.all()
+
+
+        elif user['user_level'] == 1:
+
+            """province"""
+
+
+            schools_obj =School.objects.select_related('area_fk').\
+                        filter(area_fk__province_fk=user['area_fk__province_fk'])
+
+        elif user['user_level']==2:
+
+            """district"""
+
+            schools_obj = School.objects.select_related('area_fk').\
+                        filter(area_fk__province_fk=user['area_fk__province_fk'],
+                                area_fk__district_fk=user['area_fk__district_fk'])
+
+
+        elif user['user_level']==3:
+
+            """commune"""
+
+            schools_obj = School.objects.select_related('area_fk').\
+                        filter(area_fk__province_fk=user['area_fk__province_fk'],
+                                area_fk__district_fk=user['area_fk__district_fk'],
+                                area_fk__commune_clinic_fk=user['area_fk__commune_clinic_fk'])
+
+        elif user['user_level']==4:
+
+            """"school"""
+            schools_obj = School.objects.filter(id=user['school_fk'])
+
+    except:
+        raise exceptions.ValidationError
+
+
+
+    school_serializer = SchoolListSerializer(schools_obj,many=True).data
+
+
+
+    data['schools'] = school_serializer
+
+    return Response(data)

@@ -90,3 +90,8 @@ class StudentSerializer(serializers.ModelSerializer):
                 data[field]=''
 
         return data
+
+class SchoolListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = School
+        fields = ['school_name','id']
