@@ -38,10 +38,23 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class DistrictSerializer(serializers.ModelSerializer):
+    """
+     대시보드 필터링에서 사용
+
+     """
     class Meta:
         model = District
         fields =  ['district']
 
+
+class CommuneSerializer(serializers.ModelSerializer):
+    """
+    대시보드 필터링에서 사용
+
+    """
+    class Meta:
+        model = CommuneClinic
+        fields = ['commune_clinic']
 
 class NoticeFileSerializer(serializers.ModelSerializer):
     """
@@ -95,3 +108,6 @@ class SchoolListSerializer(serializers.ModelSerializer):
     class Meta:
         model = School
         fields = ['school_name','id']
+
+
+# class imageSerializer(serializers.ModelSerializer):

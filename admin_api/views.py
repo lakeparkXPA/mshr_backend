@@ -152,6 +152,7 @@ def dashboard_filter(request):
     filter = request.POST.get('filter','')
     province = request.POST.get('province','')
     district = request.POST.get('district', '')
+    commune = request.POST.get('commune','')
     school = request.POST.get('school_name', '')
 
     data = {}
@@ -178,14 +179,14 @@ def dashboard_filter(request):
             for order_list in province_list:
 
                 data['province'].append(order_list['province'])
-                print(data)
+
 
         except:
             raise exceptions.ValidationError
 
 
     elif filter =='district' and (user_level in[0,1]):
-        """Province 검색 할 경우"""
+        """district 검색 할 경우"""
 
         if not province:
             raise exceptions.ValidationError
@@ -203,8 +204,25 @@ def dashboard_filter(request):
         for order_list in district_list:
             data['district'].append(order_list['district'])
 
-        if 1 in [1,2]:
-            print(True)
+
+
+    elif filter =='commune' and (user_level in [0,1,2]):
+        "commune 검색할경우 "
+
+        if not province or not district:
+            raise exceptions.ValidationError
+
+        commune_obj = CommuneClinic.objects.select_related('district_fk').\
+                        filter(district_fk__district=district)
+
+        commune_list = CommuneSerializer(commune_obj,many=True).data
+        print(connection.queries)
+        data['commune'] = []
+        for commune in commune_list:
+            data['commune'].append(commune['commune_clinic'])
+
+
+
 
 
     elif filter == 'school' and (user_level in [0,1,2,3]):
@@ -527,3 +545,12 @@ def studentHealth_school_list(request):
     data['schools'] = school_serializer
 
     return Response(data)
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_student_add(request):
+    """학생 등록 api"""
+
+    data =request.data['info']
+    print(data)
+    return Response()
