@@ -1,14 +1,9 @@
 import jwt
-from django.http import JsonResponse
-from django.utils.encoding import smart_text
+
 from rest_framework import permissions, authentication
-from rest_framework.status import *
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication, BaseJSONWebTokenAuthentication
-from rest_framework_jwt.settings import api_settings
+
 from rest_framework import exceptions
-from rest_framework.response import *
-from django.http import HttpResponse
-from admin_api import custom
+
 from mshr_backend.settings import ALGORITHM, SECRET_KEY
 from admin_api.models import *
 

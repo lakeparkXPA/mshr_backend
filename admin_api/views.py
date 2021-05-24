@@ -1,6 +1,9 @@
+import os
+
 from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import render
+from pandas.tests.io.excel.test_openpyxl import openpyxl
 from rest_framework.decorators import *
 from rest_framework.permissions import *
 from rest_framework.response import *
@@ -16,11 +19,15 @@ import hashlib, jwt
 from django.contrib.auth import authenticate
 import datetime
 from rest_framework_jwt.views import obtain_jwt_token
+from rest_framework.parsers import MultiPartParser
 
 from mshr_backend.settings import ALGORITHM, SECRET_KEY, BASE_DIR
 from mshr_backend.settings import STATIC_DIR
 from admin_api.custom import *
 from django.db import connection
+import pandas as pd
+import json
+from django.db import transaction
 @api_view(['POST','GET'])
 @permission_classes([IsMaster])
 def test(request):
@@ -551,6 +558,96 @@ def studentHealth_school_list(request):
 def studentHealth_student_add(request):
     """학생 등록 api"""
 
-    data =request.data['info']
-    print(data)
+    student_data = request.POST.get('info','')
+    student_data = json.loads(student_data)
+
+    file_data = request.FILES['file']
+
+    student_data['pic'] = file_data
+
+    if Student.objects.filter(medical_insurance_number=
+                              student_data['medical_insurance_number']).exists():
+        return Response("already exist.",status=HTTP_409_CONFLICT)
+
+
+
+    student_obj = AddStudentSerializer(data=student_data,partial=True)
+
+    if student_obj.is_valid():
+         student_obj.save()
+    else:
+        raise exceptions.ValidationError
+
+    return Response(status=HTTP_200_OK)
+
     return Response()
+
+
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_min_check(request):
+
+    """min 중복여부 체크 api"""
+    min = request.POST.get('min','')
+    print(min)
+    if not min:
+        raise exceptions.ValidationError("min error")
+
+
+    data = {}
+
+    try:
+        obj = Student.objects.get(medical_insurance_number=min)
+        data['check'] = False
+
+    except Student.DoesNotExist:
+        data['check']= True
+
+
+    return Response(data)
+
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_student_addAll(request):
+
+    """csv 파일 파싱 후 저장 """
+
+    file = request.FILES.get('file','')
+    if not file:
+        raise exceptions.ValidationError('file error')
+    print(file)
+    print("test")
+
+
+    """ openpyxl은 xlsx만 파싱가능, xlrd? 는 xls만 파싱가능..
+    뭘써야할지 고민입니다"""
+    df = pd.read_excel(file,engine='openpyxl')
+
+    df = df.drop(['No'],axis=1)
+    df = df.drop([''])
+    # df.columns = ['school_fk','student_id','student_name',
+    #               'grade','grade_class','student_number','date_of_birth',
+    #               'gender','medical_insurance_number','village','contact','parents_name']
+    students = []
+
+    for i in df.index:
+        data = {}
+        for j, k in enumerate(df.columns):
+            data[k] = df.values[i][j]
+        students.append(data)
+
+    print(students)
+
+
+
+
+
+
+
+    return Response()
+
+

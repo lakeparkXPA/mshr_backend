@@ -1,6 +1,7 @@
 import simplejwt as simplejwt
+
 from rest_framework import serializers
-from .models import *
+from admin_api.models import *
 from rest_framework_simplejwt.serializers import TokenObtainSerializer
 
 
@@ -11,7 +12,6 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields =['user_id', 'user_level', 'password', 'token']
-
 
 class RefreshTokenSerializer(serializers.ModelSerializer):
 
@@ -28,13 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-    # def to_representation(self, instance):
-    #
-    #     data = super().to_representation(instance)
-    #     if data['user_mobile'] == None:
-    #         data['user_mobile'] = ""
-    #
-    #     return data
+
 
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -110,4 +104,11 @@ class SchoolListSerializer(serializers.ModelSerializer):
         fields = ['school_name','id']
 
 
-# class imageSerializer(serializers.ModelSerializer):
+class AddStudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = '__all__'
+
+
+
+

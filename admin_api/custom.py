@@ -18,6 +18,7 @@ from rest_framework.response import Response
 #     #     response.data['status_code'] = response.status_code
 #
 #     return Response("error",status=400)
-
+from admin_api.serializers import StudentSerializer
+from mshr_backend.settings import MEDIA_URL
 
 

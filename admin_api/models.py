@@ -1,7 +1,23 @@
-from django.db import models
+import json
+
 
 # Create your models here.
 from django.db import models
+from django.forms import model_to_dict
+
+from mshr_backend.settings import MEDIA_URL, MEDIA_ROOT, BASE_DIR
+
+
+def file_upload_path(instance,filename):
+
+    instance = model_to_dict(instance)
+
+    folder = '/'.join([str(instance['school_fk']),filename])
+
+    print(folder)
+
+    return folder
+
 class Area(models.Model):
     area_id = models.AutoField(primary_key=True)
     province_fk = models.ForeignKey('Province', models.DO_NOTHING, db_column='province_fk', blank=True, null=True)
@@ -68,7 +84,7 @@ class Graduate(models.Model):
     contact = models.CharField(max_length=30, blank=True, null=True)
     parents_name = models.CharField(max_length=30, blank=True, null=True)
     medical_insurance_number = models.CharField(max_length=30, blank=True, null=True)
-    pic = models.CharField(max_length=255, blank=True, null=True)
+    pic = models.ImageField(upload_to=file_upload_path,null=True)
 
     class Meta:
         managed = False
@@ -151,7 +167,7 @@ class Student(models.Model):
     contact = models.CharField(max_length=30, blank=True, null=True)
     parents_name = models.CharField(max_length=30, blank=True, null=True)
     medical_insurance_number = models.CharField(max_length=30, blank=True, null=True)
-    pic = models.CharField(max_length=255, blank=True, null=True)
+    pic = models.ImageField(upload_to=file_upload_path,null=True)
 
     class Meta:
         managed = False
@@ -174,3 +190,6 @@ class User(models.Model):
     class Meta:
         managed = False
         db_table = 'user'
+
+
+

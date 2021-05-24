@@ -14,4 +14,6 @@ urlpatterns=[
     path('studentHealth/student/list',views.studentHealth_student_list),
     path('studentHealth/student/schoolList',views.studentHealth_school_list),
     path('studentHealth/student/addStudent',views.studentHealth_student_add),
+    path('studentHealth/student/addStudent/min',views.studentHealth_min_check),
+    path('studentHealth/student/addStudents',views.studentHealth_student_addAll),
 ]
