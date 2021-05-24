@@ -561,9 +561,10 @@ def studentHealth_student_add(request):
     student_data = request.POST.get('info','')
     student_data = json.loads(student_data)
 
-    file_data = request.FILES['file']
+    file_data = request.FILES.get('file','')
 
-    student_data['pic'] = file_data
+    if file_data:
+        student_data['pic'] =file_data
 
     if Student.objects\
             .filter(medical_insurance_number=student_data['medical_insurance_number'])\
@@ -572,9 +573,7 @@ def studentHealth_student_add(request):
         return Response("already exist.",status=HTTP_409_CONFLICT)
 
 
-
     student_obj = AddStudentSerializer(data=student_data,partial=True)
-
     if student_obj.is_valid():
          student_obj.save()
     else:
@@ -626,7 +625,7 @@ def studentHealth_student_get_img(request,student_id):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([AllAuthenticated])
 def studentHealth_min_check(request):
 
     """min 중복여부 체크 api"""
@@ -649,6 +648,50 @@ def studentHealth_min_check(request):
     return Response(data)
 
 
+@api_view(['PUT'])
+@permission_classes([AllAuthenticated])
+def studentHealth_student_modify(request):
+    """학생 정보 수정시 사용 api"""
+
+    student_data = request.POST.get('info','')
+    student_data = json.loads(student_data)
+
+    file_data = request.FILES.get('file','')
+
+    if file_data:
+        student_data['pic'] = file_data
+
+    student_id = student_data.pop('student_id')
+    try:
+        student_obj = Student.objects.get(student_id=student_id)
+
+    except:
+        raise exceptions.ValidationError("Does not exist.")
+
+
+
+    origin_img = student_obj.pic
+
+
+    student_serializer = AddStudentSerializer(student_obj,data=student_data,partial=True)
+
+    try:
+        if student_serializer.is_valid():
+            student_serializer.save()
+
+            """이미지를 새로 갱신한다면 원래 이미지는 삭제 """
+            if file_data and os.path.isfile(origin_img.path):
+                os.remove(origin_img.path)
+    except:
+        raise exceptions.ValidationError("data insert error")
+
+
+    return Response(status=HTTP_200_OK)
+
+
+
+
+
 
 
 
@@ -667,7 +710,7 @@ def studentHealth_student_addAll(request):
 
     """ openpyxl은 xlsx만 파싱가능, xlrd? 는 xls만 파싱가능..
     뭘써야할지 고민입니다"""
-    df = pd.read_excel(file,engine='openpyxl')
+    df = pd.read_excel(file)
 
     df = df.drop(['No'],axis=1)
     df = df.drop([''])

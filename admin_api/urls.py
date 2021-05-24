@@ -17,5 +17,6 @@ urlpatterns=[
     path('studentHealth/student/addStudent/min',views.studentHealth_min_check),
     path('studentHealth/student/addStudents',views.studentHealth_student_addAll),
     path('studentHealth/student/modiStudent/<int:student_id>',views.studentHealth_student_get),
-path('studentHealth/student/modiStudentImg/<int:student_id>',views.studentHealth_student_get_img),
+    path('studentHealth/student/modiStudentImg/<int:student_id>',views.studentHealth_student_get_img),
+    path('studentHealth/student/modiStudent', views.studentHealth_student_modify),
 ]

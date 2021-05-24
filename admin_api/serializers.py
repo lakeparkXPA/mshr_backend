@@ -1,3 +1,5 @@
+import os
+
 import simplejwt as simplejwt
 
 from rest_framework import serializers
@@ -120,6 +122,24 @@ class AddStudentSerializer(serializers.ModelSerializer):
                 data[field]=''
 
         return data
+
+    def update(self, instance, validated_data):
+
+
+        instance.student_name = validated_data.get('student_name',instance.student_name)
+        instance.grade = validated_data.get('grade', instance.grade)
+        instance.grade_class = validated_data.get('grade_class',instance.grade_class)
+        instance.gender = validated_data.get('gender',instance.gender)
+        instance.date_of_birth = validated_data.get('date_of_birth', instance.date_of_birth)
+        instance.student_number = validated_data.get('student_number', instance.student_number)
+        instance.village = validated_data.get('village',instance.village)
+        instance.contact = validated_data.get('contact',instance.contact)
+        instance.parents_name = validated_data.get('parents_name',instance.parents_name)
+        instance.pic = validated_data.get('pic',instance.pic)
+
+        instance.save()
+        return instance
+
 
 
 

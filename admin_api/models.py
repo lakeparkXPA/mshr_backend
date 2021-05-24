@@ -2,7 +2,10 @@ import json
 
 
 # Create your models here.
+import sys
+
 from django.db import models
+from django.dispatch import receiver
 from django.forms import model_to_dict
 
 from mshr_backend.settings import MEDIA_URL, MEDIA_ROOT, BASE_DIR
@@ -12,11 +15,11 @@ def file_upload_path(instance,filename):
 
     instance = model_to_dict(instance)
 
-    folder = '/'.join([str(instance['school_fk']),filename])
+    folder = '/'.join(['student',str(instance['school_fk']),filename])
 
-    print(folder)
 
     return folder
+
 
 class Area(models.Model):
     area_id = models.AutoField(primary_key=True)
@@ -172,6 +175,7 @@ class Student(models.Model):
     class Meta:
         managed = False
         db_table = 'student'
+
 
 
 class User(models.Model):
