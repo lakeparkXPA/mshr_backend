@@ -1,7 +1,7 @@
 import os
 
 from django.db.models import Q
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import render
 from pandas.tests.io.excel.test_openpyxl import openpyxl
 from rest_framework.decorators import *
@@ -565,8 +565,10 @@ def studentHealth_student_add(request):
 
     student_data['pic'] = file_data
 
-    if Student.objects.filter(medical_insurance_number=
-                              student_data['medical_insurance_number']).exists():
+    if Student.objects\
+            .filter(medical_insurance_number=student_data['medical_insurance_number'])\
+            .exists():
+
         return Response("already exist.",status=HTTP_409_CONFLICT)
 
 
@@ -585,8 +587,46 @@ def studentHealth_student_add(request):
 
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([AllAuthenticated])
+def studentHealth_student_get(request,student_id):
+
+    """학생 수정시 학생 정보 로딩 api"""
+
+    print(student_id)
+    print(student_id)
+    if student_id is None:
+        raise exceptions.ValidationError("Student_id error.")
+
+
+    student_obj = Student.objects.get(student_id=student_id)
+    student_serializer = AddStudentSerializer(student_obj).data
+    print(student_serializer)
+
+    student_serializer.pop('pic')
+
+
+
+    return Response(student_serializer)
+
+@api_view(['GET'])
+@permission_classes([AllAuthenticated])
+def studentHealth_student_get_img(request,student_id):
+
+    "학생 수정시 학생 이미지 로딩 api"
+
+    if student_id is None:
+        raise exceptions.ValidationError("Student_id error.")
+
+    student_pic = Student.objects.get(student_id=student_id).pic
+    if student_pic is None:
+        return Response()
+
+    return FileResponse(student_pic)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def studentHealth_min_check(request):
 
     """min 중복여부 체크 api"""
@@ -607,6 +647,8 @@ def studentHealth_min_check(request):
 
 
     return Response(data)
+
+
 
 
 

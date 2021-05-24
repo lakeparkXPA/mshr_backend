@@ -105,9 +105,22 @@ class SchoolListSerializer(serializers.ModelSerializer):
 
 
 class AddStudentSerializer(serializers.ModelSerializer):
+    """학생 등록시 사용"""
     class Meta:
         model = Student
         fields = '__all__'
+
+    def to_representation(self, instance):
+        field_list = [field.name for field in Student._meta.get_fields()]
+        field_list.remove('checkup')
+
+        data = super().to_representation(instance)
+        for field in field_list:
+            if data[field] ==None:
+                data[field]=''
+
+        return data
+
 
 
 
