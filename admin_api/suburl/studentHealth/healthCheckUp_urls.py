@@ -3,5 +3,6 @@ from admin_api.views import studentHealth_healthCheckUp
 
 
 urlpatterns=[
-    path('getCheckUpList/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_list)
+    path('getCheckUpList/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_list),
+    path('getStudentList/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_stuList),
 ]

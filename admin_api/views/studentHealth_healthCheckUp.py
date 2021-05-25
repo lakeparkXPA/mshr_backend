@@ -78,3 +78,40 @@ def studentHealth_healthCheckUp_list(request):
     #print(checkup)
 
     return Response(data,status=HTTP_200_OK)
+
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_healthCheckUp_stuList(request):
+
+    """체크업 등록시 학생 정보 조회"""
+
+    school_id = request.POST.get('school_id','')
+    grade = request.POST.get('grade','')
+
+
+    q = Q()
+
+    if school_id =='':
+        raise exceptions.ValidationError("inValid school_id")
+    else:
+        q.add(Q(school_fk=school_id),Q.AND)
+
+    if grade:
+        q.add(Q(grade=grade),Q.AND)
+
+    try:
+
+        students_obj = Student.objects.filter(q)
+
+    except Exception as e:
+        raise exceptions.ValidationError(str(e))
+
+    students_serializer = StudentListSerializer(students_obj,many=True).data
+
+    data = {}
+
+    data['students'] = students_serializer
+
+    return Response(data,status=HTTP_200_OK)

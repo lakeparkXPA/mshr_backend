@@ -174,3 +174,11 @@ class CheckUpSerializer(serializers.ModelSerializer):
         data.pop('graduate_fk')
         data.pop('checked')
         return data
+
+
+class StudentListSerializer(serializers.ModelSerializer):
+    """healthCheckUp/학생 리스트 조회시 사용"""
+    class Meta:
+        model = Student
+        fields = ['student_id','medical_insurance_number','student_name']
+
