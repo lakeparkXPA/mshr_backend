@@ -48,7 +48,7 @@ class Checkup(models.Model):
     diastolic = models.FloatField(blank=True, null=True)
     bust = models.FloatField(blank=True, null=True)
     date = models.DateField(blank=True, null=True)
-    checked = models.IntegerField()
+    checked = models.IntegerField(blank=True,default=0)
     class Meta:
         managed = False
         db_table = 'checkup'

@@ -115,3 +115,30 @@ def studentHealth_healthCheckUp_stuList(request):
     data['students'] = students_serializer
 
     return Response(data,status=HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_healthCheckUp_addCheckUp(request):
+    """빈 체크업 등록 페이지"""
+
+    student_id = request.POST.get('student_id','')
+
+    if student_id == '':
+        raise exceptions.ValidationError("inValid student_id")
+    else:
+        try:
+            student = Student.objects.get(student_id=student_id)
+            checkup = Checkup(student_fk=student,date=datetime.datetime.today().strftime("%Y-%m-%d"))
+
+            checkup.save()
+
+        except Exception as e:
+            raise exceptions.ValidationError(str(e))
+
+
+    return Response(status=HTTP_201_CREATED)
+
+
+
+
