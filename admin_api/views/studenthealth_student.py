@@ -252,9 +252,13 @@ def studentHealth_student_add(request):
     if file_data:
         student_data['pic'] =file_data
 
+    """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
     if Student.objects\
             .filter(medical_insurance_number=student_data['medical_insurance_number'])\
-            .exists():
+            .exists() or \
+            Graduate.objects.\
+                    filter(medical_insurance_number=student_data['medical_insurance_number'])\
+                    .exists():
 
         return Response("already exist.",status=HTTP_409_CONFLICT)
 
@@ -315,19 +319,22 @@ def studentHealth_min_check(request):
 
     """min 중복여부 체크 api"""
     min = request.POST.get('min','')
-    print(min)
+
     if not min:
         raise exceptions.ValidationError("min error")
 
 
     data = {}
-
-    try:
-        obj = Student.objects.get(medical_insurance_number=min)
+    """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
+    if Student.objects\
+            .filter(medical_insurance_number=min)\
+            .exists() or \
+            Graduate.objects.\
+                    filter(medical_insurance_number=min)\
+                    .exists():
         data['check'] = False
-
-    except Student.DoesNotExist:
-        data['check']= True
+    else:
+        data['check'] = True
 
 
     return Response(data)
@@ -400,7 +407,7 @@ def studentHealth_student_delete(request,student_id):
     graduate_obj.pop('student_id')
     min = graduate_obj['medical_insurance_number']
 
-    print(graduate_obj)
+
     if graduate_obj['pic'] == None or graduate_obj['pic'] =='':
         graduate_obj.pop('pic')
 
@@ -468,10 +475,6 @@ def studentHealth_student_addAll(request):
         students.append(data)
 
     print(students)
-
-
-
-
 
 
 
