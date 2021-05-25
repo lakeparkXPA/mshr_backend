@@ -19,4 +19,6 @@ urlpatterns=[
     path('studentHealth/student/modiStudent/<int:student_id>',views.studentHealth_student_get),
     path('studentHealth/student/modiStudentImg/<int:student_id>',views.studentHealth_student_get_img),
     path('studentHealth/student/modiStudent', views.studentHealth_student_modify),
+    path('studentHealth/student/delStudent/<int:student_id>', views.studentHealth_student_delete),
+
 ]

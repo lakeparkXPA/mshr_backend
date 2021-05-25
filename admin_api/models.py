@@ -87,7 +87,7 @@ class Graduate(models.Model):
     contact = models.CharField(max_length=30, blank=True, null=True)
     parents_name = models.CharField(max_length=30, blank=True, null=True)
     medical_insurance_number = models.CharField(max_length=30, blank=True, null=True)
-    pic = models.ImageField(upload_to=file_upload_path,null=True)
+    pic = models.ImageField(upload_to=file_upload_path,blank=True,null=True)
 
     class Meta:
         managed = False
@@ -170,7 +170,7 @@ class Student(models.Model):
     contact = models.CharField(max_length=30, blank=True, null=True)
     parents_name = models.CharField(max_length=30, blank=True, null=True)
     medical_insurance_number = models.CharField(max_length=30, blank=True, null=True)
-    pic = models.ImageField(upload_to=file_upload_path,null=True)
+    pic = models.ImageField(upload_to=file_upload_path,blank=True,null=True)
 
     class Meta:
         managed = False

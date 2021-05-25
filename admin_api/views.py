@@ -579,9 +579,8 @@ def studentHealth_student_add(request):
     else:
         raise exceptions.ValidationError
 
-    return Response(status=HTTP_200_OK)
+    return Response(status=HTTP_201_CREATED)
 
-    return Response()
 
 
 
@@ -684,6 +683,63 @@ def studentHealth_student_modify(request):
                 os.remove(origin_img.path)
     except:
         raise exceptions.ValidationError("data insert error")
+
+
+    return Response(status=HTTP_200_OK)
+
+
+
+@api_view(['DELETE'])
+@permission_classes([AllAuthenticated])
+def studentHealth_student_delete(request,student_id):
+
+    if student_id is None:
+        raise exceptions.ValidationError("Student_id error")
+
+
+    try:
+        student_obj = Student.objects.\
+                        prefetch_related('checkup_set').\
+                        get(student_id=student_id)
+    except:
+        raise exceptions.ValidationError("Student does not exist.")
+
+
+    checkup_set = student_obj.checkup_set.all()
+
+
+
+
+    graduate_obj = model_to_dict(student_obj)
+    graduate_obj.pop('student_id')
+    min = graduate_obj['medical_insurance_number']
+
+    print(graduate_obj)
+    if graduate_obj['pic'] == None or graduate_obj['pic'] =='':
+        graduate_obj.pop('pic')
+
+    try:
+
+        with transaction.atomic():
+
+            graduate_serializer = GraduateSerializer(data = graduate_obj,partial=True)
+
+            if graduate_serializer.is_valid():
+                graduate_serializer.save()
+
+                graduate_obj = Graduate.objects.\
+                                get(medical_insurance_number=min)
+                for checkup in checkup_set:
+                    checkup.graduate_fk = graduate_obj
+                    checkup.save()
+
+                student_obj.delete()
+            else:
+
+                raise exceptions.ValidationError
+
+    except Exception as e:
+        raise exceptions.ValidationError(str(e))
 
 
     return Response(status=HTTP_200_OK)
