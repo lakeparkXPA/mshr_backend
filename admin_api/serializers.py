@@ -148,3 +148,29 @@ class GraduateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
+class CheckUpSerializer(serializers.ModelSerializer):
+    """체크업 리스트 목록 조회시 사용"""
+
+    class Meta:
+        model = Checkup
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        field_list = [field.name for field in Checkup._meta.get_fields()]
+        data = super().to_representation(instance)
+
+        for field in field_list:
+            if data[field] == None:
+                data[field]=''
+
+        if instance.student_fk:
+            student = StudentSerializer(instance.student_fk).data
+            data['school_id'] = instance.student_fk.school_fk.school_id
+            data['medical_insurance_number'] = student['medical_insurance_number']
+            data['student_name'] = student['student_name']
+            data['grade'] = student['grade']
+
+        data.pop('graduate_fk')
+        data.pop('checked')
+        return data

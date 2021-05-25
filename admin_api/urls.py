@@ -1,7 +1,7 @@
 from django.urls import path, include
 
 from admin_api.suburl import dashboard_urls, studentHealth_urls
-from admin_api.views import studenthealth_student, dashboard
+from admin_api.views import studentHealth_student, dashboard
 from admin_api import views
 
 app_name= 'admin_api'
