@@ -174,6 +174,23 @@ class CheckUpSerializer(serializers.ModelSerializer):
         data.pop('graduate_fk')
         data.pop('checked')
         return data
+    def update(self, instance, validated_data):
+        instance.date = validated_data.get('date',instance.date)
+        instance.height = validated_data.get('height',instance.height)
+        instance.weight = validated_data.get('weight',instance.weight)
+        instance.vision_left = validated_data.get('vision_left',instance.vision_left)
+        instance.vision_right = validated_data.get('vision_right',instance.vision_right)
+        instance.glasses = validated_data.get('glasses',instance.glasses)
+        instance.corrected_left = validated_data.get('corrected_left',instance.corrected_left)
+        instance.corrected_right = validated_data.get('corrected_right',instance.corrected_right)
+        instance.dental = validated_data.get('dental',instance.dental)
+        instance.hearing = validated_data.get('hearing',instance.hearing)
+        instance.systolic = validated_data.get('systolic',instance.systolic)
+        instance.diastolic = validated_data.get('diastolic',instance.diastolic)
+        instance.bust = validated_data.get('bust',instance.bust)
+
+        instance.save()
+        return instance
 
 
 class StudentListSerializer(serializers.ModelSerializer):

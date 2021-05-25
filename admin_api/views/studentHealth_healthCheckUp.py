@@ -124,11 +124,20 @@ def studentHealth_healthCheckUp_addCheckUp(request):
 
     student_id = request.POST.get('student_id','')
 
+    """같은날 체크업은 1개만 등록"""
     if student_id == '':
         raise exceptions.ValidationError("inValid student_id")
     else:
         try:
+            """체크업은 개인당 하루에 최대 1개"""
+            if Checkup.objects\
+                .filter(student_fk=student_id,
+                        date=datetime.datetime.today().strftime("%Y-%m-%d"))\
+                        .exists():
+                raise ValueError("Already exist check up.")
+
             student = Student.objects.get(student_id=student_id)
+
             checkup = Checkup(student_fk=student,date=datetime.datetime.today().strftime("%Y-%m-%d"))
 
             checkup.save()
@@ -142,3 +151,28 @@ def studentHealth_healthCheckUp_addCheckUp(request):
 
 
 
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def studentHealth_healthCheckUp_modiCheckUp(request):
+    """체크업 수정 api"""
+
+    checkup_data = request.POST.get('info','')
+    print(checkup_data)
+    checkup_data = json.loads(checkup_data)
+
+    try:
+        checkup_obj = Checkup.objects.get(id=checkup_data['id'])
+
+        checkup_serilizer = CheckUpSerializer(checkup_obj,data=checkup_data,partial=True)
+
+        if checkup_serilizer.is_valid():
+            checkup_serilizer.save()
+        else:
+            raise exceptions.ValidationError("Cannot update checkup data")
+
+    except Exception as e:
+        raise exceptions.ValidationError(str(e))
+
+
+
+    return Response(status=HTTP_200_OK)
