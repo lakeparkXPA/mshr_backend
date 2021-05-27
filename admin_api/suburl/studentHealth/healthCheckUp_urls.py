@@ -3,8 +3,10 @@ from admin_api.views import studentHealth_healthCheckUp
 
 
 urlpatterns=[
-    path('getCheckUpList/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_list),
-    path('getStudentList/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_stuList),
-    path('addCheckUp/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_addCheckUp),
-    path('modiCheckUp/',studentHealth_healthCheckUp.studentHealth_healthCheckUp_modiCheckUp),
+    path('getCheckUpList/',studentHealth_healthCheckUp.list),
+    path('getStudentList/',studentHealth_healthCheckUp.stuList),
+    path('addCheckUp/',studentHealth_healthCheckUp.addCheckUp),
+    path('modiCheckUp/',studentHealth_healthCheckUp.modiCheckUp),
+
+    path('getCheckUp/',studentHealth_healthCheckUp.getCheckUp),
     ]

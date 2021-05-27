@@ -19,8 +19,9 @@ from django.db import transaction
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_list(request):
+def student_list(request):
 
+    """학생 리스트 조회"""
     user_id = request.POST.get('user_id','')
     school_id = request.POST.get('school_id','')
     grade = request.POST.get('grade','')
@@ -170,7 +171,7 @@ def studentHealth_student_list(request):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_school_list(request):
+def school_list(request):
 
     """Student 학교 명단 조회 시 사용 API"""
     user_id = request.POST.get('user_id','')
@@ -241,7 +242,7 @@ def studentHealth_school_list(request):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_add(request):
+def student_add(request):
     """학생 등록 api"""
 
     student_data = request.POST.get('info','')
@@ -277,7 +278,7 @@ def studentHealth_student_add(request):
 
 @api_view(['GET'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_get(request,student_id):
+def student_get(request,student_id):
 
     """학생 수정시 학생 정보 로딩 api"""
 
@@ -299,7 +300,7 @@ def studentHealth_student_get(request,student_id):
 
 @api_view(['GET'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_get_img(request,student_id):
+def student_get_img(request,student_id):
 
     "학생 수정시 학생 이미지 로딩 api"
 
@@ -315,7 +316,7 @@ def studentHealth_student_get_img(request,student_id):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_min_check(request):
+def min_check(request):
 
     """min 중복여부 체크 api"""
     min = request.POST.get('min','')
@@ -342,7 +343,7 @@ def studentHealth_min_check(request):
 
 @api_view(['PUT'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_modify(request):
+def student_modify(request):
     """학생 정보 수정시 사용 api"""
 
     student_data = request.POST.get('info','')
@@ -384,7 +385,7 @@ def studentHealth_student_modify(request):
 
 @api_view(['DELETE'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_delete(request,student_id):
+def student_delete(request,student_id):
 
     if student_id is None:
         raise exceptions.ValidationError("Student_id error")
@@ -446,7 +447,7 @@ def studentHealth_student_delete(request,student_id):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_student_addAll(request):
+def student_addAll(request):
 
     """csv 파일 파싱 후 저장 """
 

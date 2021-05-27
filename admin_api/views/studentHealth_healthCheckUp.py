@@ -21,7 +21,7 @@ from django.db import transaction
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_healthCheckUp_list(request):
+def list(request):
 
     """체크업 리스트 조회 API"""
 
@@ -83,7 +83,7 @@ def studentHealth_healthCheckUp_list(request):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_healthCheckUp_stuList(request):
+def stuList(request):
 
     """체크업 등록시 학생 정보 조회"""
 
@@ -119,7 +119,7 @@ def studentHealth_healthCheckUp_stuList(request):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_healthCheckUp_addCheckUp(request):
+def addCheckUp(request):
     """빈 체크업 등록 페이지"""
 
     student_id = request.POST.get('student_id','')
@@ -153,7 +153,7 @@ def studentHealth_healthCheckUp_addCheckUp(request):
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
-def studentHealth_healthCheckUp_modiCheckUp(request):
+def modiCheckUp(request):
     """체크업 수정 api"""
 
     checkup_data = request.POST.get('info','')
@@ -176,3 +176,35 @@ def studentHealth_healthCheckUp_modiCheckUp(request):
 
 
     return Response(status=HTTP_200_OK)
+
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def getCheckUp(request):
+    """체크업 상세 조회 api"""
+    school_id = request.POST.get('school_id','')
+    student_id = request.POST.get('student_id','')
+    checkup_id = request.POST.get('checkup_id','')
+
+
+    data ={}
+    if checkup_id:
+        try:
+            checkup_obj = Checkup.objects.select_related('student_fk')\
+                            .get(id=checkup_id)
+
+            checkup_serializer = CheckUpGetSerializier(checkup_obj).data
+
+            data = checkup_serializer
+
+        except:
+            raise exceptions.ValidationError("Does not exist checkup.")
+
+    else:
+        raise exceptions.ValidationError("check up id error.")
+
+
+
+
+    return Response(data,status=HTTP_200_OK)
