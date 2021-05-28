@@ -34,7 +34,6 @@ class DashBoardFilterTest(TestCase):
             'user_id' : 'test1',
             'province' : 'test1',
             'district' : 'test2'
-
         }
 
 

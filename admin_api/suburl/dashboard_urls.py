@@ -6,5 +6,5 @@ urlpatterns=[
     path('location/',dashboard.dashboard_filter),
     path('notice/<int:notice_id>/', dashboard.dashboard_notice),
     path('notice/<int:notice_id>/file/', dashboard.dashboard_notice_img),
-
+    path('info/',dashboard.dashboard_info),
 ]
