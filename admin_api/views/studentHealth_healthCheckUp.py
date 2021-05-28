@@ -208,3 +208,20 @@ def getCheckUp(request):
 
 
     return Response(data,status=HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes([AllAuthenticated])
+def delCheckUp(request,checkup_id):
+    """체크업 삭제 api"""
+
+
+    try:
+        checkup_obj = Checkup.objects.get(id=checkup_id)
+
+        checkup_obj.delete()
+    except:
+        raise exceptions.ValidationError("can't not delete check up.")
+
+
+    return Response(status=HTTP_200_OK)

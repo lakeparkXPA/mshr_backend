@@ -14,7 +14,7 @@ from django.db import connection
 
 
 @api_view(['POST'])
-@permission_classes([AllAuthenticated])
+#@permission_classes([AllAuthenticated])
 def dashboard_filter(request):
     '''
     대시보드 province, district,school 필터링
@@ -126,7 +126,7 @@ def dashboard_filter(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllAuthenticated])
+#@permission_classes([AllAuthenticated])
 def dashboard_notice_list(request):
     """
     공지사항 list 조회 api
@@ -179,17 +179,16 @@ def dashboard_notice(request,notice_id):
 
 @api_view(['GET'])
 @permission_classes([AllAuthenticated])
-def dashboard_notice_img(request,notice_id,file_name):
+def dashboard_notice_img(request,notice_id):
     """
-    공지사항 이미지 다운로드 API
+    공지사항 파일 다운로드 API
     """
-    try:
-        img = open(STATIC_DIR+f'/notice/{notice_id}/{file_name}','rb')
 
-    except:
-        raise exceptions.NotFound
+    notice_file = NoticeFile.objects.get(notice_fk=notice_id).file_name
+    if notice_file is None:
+        return Response()
 
+    return FileResponse(notice_file,as_attachment=True)
 
-    return FileResponse(img,as_attachment=True)
 
 

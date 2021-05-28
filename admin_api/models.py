@@ -20,6 +20,10 @@ def file_upload_path(instance,filename):
 
     return folder
 
+def notice_upload_path(instance, filename):
+    instance = model_to_dict(instance)
+    folder = '/'.join(['notice', str(instance['notice_fk']), filename])
+    return folder
 
 class Area(models.Model):
     area_id = models.AutoField(primary_key=True)
@@ -123,7 +127,7 @@ class Notice(models.Model):
 
 class NoticeFile(models.Model):
     notice_fk = models.ForeignKey(Notice, models.DO_NOTHING, db_column='notice_fk')
-    file_name = models.CharField(max_length=100)
+    file_name = models.FileField(upload_to=notice_upload_path,blank=True,null=True)
 
     class Meta:
         managed = False

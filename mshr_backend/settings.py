@@ -46,7 +46,7 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
 
     'DEFAULT_PERMISSION_CLASSES' :[
-        'admin_api.permissions.AllAuthenticated', # 인증 받은 모든 사용자
+        #'admin_api.permissions.AllAuthenticated', # 인증 받은 모든 사용자
     ],
 
 

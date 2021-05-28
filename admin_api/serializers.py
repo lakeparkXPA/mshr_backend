@@ -224,3 +224,10 @@ class CheckUpGetSerializier(serializers.ModelSerializer):
         data.pop('graduate_fk')
         data.pop('checked')
         return data
+
+
+class AddStudentsSerializer(serializers.ModelSerializer):
+    """학생 등록시 사용"""
+    class Meta:
+        model = Student
+        fields = '__all__'

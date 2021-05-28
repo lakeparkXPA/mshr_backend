@@ -9,4 +9,5 @@ urlpatterns=[
     path('modiCheckUp/',studentHealth_healthCheckUp.modiCheckUp),
 
     path('getCheckUp/',studentHealth_healthCheckUp.getCheckUp),
+    path('delCheckUp/<int:checkup_id>',studentHealth_healthCheckUp.delCheckUp),
     ]

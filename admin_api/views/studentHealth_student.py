@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from django.db.models import Q
 from django.http import FileResponse, JsonResponse
@@ -13,6 +14,7 @@ from admin_api.serializers import *
 from admin_api.custom import *
 from django.db import connection
 import pandas as pd
+import numpy as np
 import json
 from django.db import transaction
 
@@ -446,7 +448,7 @@ def student_delete(request,student_id):
 
 
 @api_view(['POST'])
-@permission_classes([AllAuthenticated])
+#@permission_classes([AllAuthenticated])
 def student_addAll(request):
 
     """csv 파일 파싱 후 저장 """
@@ -455,27 +457,71 @@ def student_addAll(request):
     if not file:
         raise exceptions.ValidationError('file error')
     print(file)
-    print("test")
+    file_check = str(file)
 
 
-    """ openpyxl은 xlsx만 파싱가능, xlrd? 는 xls만 파싱가능..
-    뭘써야할지 고민입니다"""
-    df = pd.read_excel(file)
+    file_check = file_check.split('.')
+
+    if file_check[-1] =='xlsx':
+        df = pd.read_excel(file,engine='openpyxl')
+    else:
+        df = pd.read_excel(file)
+
+
 
     df = df.drop(['No'],axis=1)
-    df = df.drop([''])
-    # df.columns = ['school_fk','student_id','student_name',
-    #               'grade','grade_class','student_number','date_of_birth',
-    #               'gender','medical_insurance_number','village','contact','parents_name']
-    students = []
+    print(df)
+    school_id_list = list(set(df['School ID']))
+    print(school_id_list)
+    df = df.rename({})
+    for school_id in school_id_list:
+        school_fk = School.objects.filter(school_id=school_id).values('id').first()
+        #print(connection.queries)
+
+        df['School ID'] = df['School ID'].apply(lambda x:school_fk['id'] if x==school_id else x)
+
+
+    df.columns = ['school_fk','student_name',
+                  'grade','grade_class','student_number','date_of_birth',
+                  'gender','medical_insurance_number','village','contact','parents_name']
+    df = df.replace(np.NAN,'')
+    print(df)
+
+    bulk_list = []
+    bulk_fk_list = []
+    #print(df.to_dict())
 
     for i in df.index:
         data = {}
+        #student = Student()
         for j, k in enumerate(df.columns):
-            data[k] = df.values[i][j]
-        students.append(data)
+            #print(k)
+            #student.k = df.values[i][j]
+            if k =='date_of_birth':
+                data[k] = df.values[i][j].date()
+            else:
+                data[k] = df.values[i][j]
 
-    print(students)
+        student_obj = AddStudentSerializer(data=data,partial=True)
+
+        if student_obj.is_valid():
+            student_obj.save()
+        else:
+            print(student_obj.errors)
+
+
+        #     print(student_obj.validated_data)
+        #     student = Student()
+        #     for key,value in student_obj.validated_data.items():
+        #         student.key = value
+        #
+        #     bulk_list.append(student)
+
+        #print(bulk_list)
+
+    # print(bulk_list)
+    # with transaction.atomic():
+    #     Student.objects.bulk_create(bulk_list)
 
 
 
