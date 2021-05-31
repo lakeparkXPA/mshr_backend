@@ -13,8 +13,6 @@ from admin_api.custom import *
 from django.db import connection
 
 
-
-
 @api_view(['POST'])
 #@permission_classes([AllAuthenticated])
 def dashboard_info(request):

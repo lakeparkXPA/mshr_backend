@@ -11,4 +11,5 @@ urlpatterns=[
     path('dashboard/',include('admin_api.suburl.dashboard_urls')),
     path('studentHealth/',include('admin_api.suburl.studentHealth_urls')),
     path('account/',include('admin_api.suburl.account_urls')),
+
 ]

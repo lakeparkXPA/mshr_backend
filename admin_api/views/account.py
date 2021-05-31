@@ -18,6 +18,7 @@ from admin_api.serializers import *
 import hashlib, jwt
 from django.contrib.auth import authenticate
 import datetime
+from admin_api.package.log import log
 from rest_framework_jwt.views import obtain_jwt_token
 from rest_framework.parsers import MultiPartParser
 
@@ -129,11 +130,13 @@ def login(request):
             obj.token = refresh_token.decode()
             obj.save()
 
+            # log(request,typ='Log in', content='Login success')
+
             return Response(data)
 
 
         else:
-            return Response("password incorrupt",status=HTTP_400_BAD_REQUEST)
+            return Response("password incorrupt",status=HTTP_200_OK)
 
     except Exception as e:
         return Response('Error : ' + str(e),status=HTTP_400_BAD_REQUEST)

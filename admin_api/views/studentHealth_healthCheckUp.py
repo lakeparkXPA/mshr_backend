@@ -10,7 +10,7 @@ from rest_framework.status import *
 
 from admin_api.permissions import *
 from admin_api.serializers import *
-
+from admin_api.package.log import *
 from admin_api.custom import *
 from django.db import connection
 import pandas as pd
@@ -146,6 +146,9 @@ def addCheckUp(request):
             raise exceptions.ValidationError(str(e))
 
 
+    #log(request,typ='Add Health Check-up',
+     #   content='Insert Health Check-up ' +
+      #          request.META.get('HTTP_USER_ID', ''))
     return Response(status=HTTP_201_CREATED)
 
 
@@ -175,6 +178,9 @@ def modiCheckUp(request):
 
 
 
+    #log(request,typ='Update Health Check-up',
+     #   content='Update Health Check-up ' +
+      #          request.META.get('HTTP_USER_ID', ''))
     return Response(status=HTTP_200_OK)
 
 
@@ -223,5 +229,8 @@ def delCheckUp(request,checkup_id):
     except:
         raise exceptions.ValidationError("can't not delete check up.")
 
+    #log(request,typ='Delete Health Check-up',
+     #   content='Delete Health Check-up ' +
+      #          request.META.get('HTTP_USER_ID', ''))
 
     return Response(status=HTTP_200_OK)

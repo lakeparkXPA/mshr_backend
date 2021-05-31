@@ -10,7 +10,7 @@ from rest_framework.status import *
 
 from admin_api.permissions import *
 from admin_api.serializers import *
-
+from admin_api.package.log import *
 from admin_api.custom import *
 from django.db import connection
 import pandas as pd
@@ -272,6 +272,10 @@ def student_add(request):
     else:
         raise exceptions.ValidationError
 
+
+    #log(request,typ='Add Student',
+        #content='Insert Student ' +
+               # request.META.get('HTTP_USER_ID',''))
     return Response(status=HTTP_201_CREATED)
 
 
@@ -381,6 +385,10 @@ def student_modify(request):
         raise exceptions.ValidationError("data insert error")
 
 
+    #log(request,typ='Update Student',
+        #content='Update Student ' +
+               # request.META.get('HTTP_USER_ID',''))
+
     return Response(status=HTTP_200_OK)
 
 
@@ -389,6 +397,7 @@ def student_modify(request):
 @permission_classes([AllAuthenticated])
 def student_delete(request,student_id):
 
+    """학생 정보 삭제 api"""
     if student_id is None:
         raise exceptions.ValidationError("Student_id error")
 
@@ -438,12 +447,116 @@ def student_delete(request,student_id):
         raise exceptions.ValidationError(str(e))
 
 
+    #log(request,typ='Delete Student',
+        #content='Delete Student ' +
+               # request.META.get('HTTP_USER_ID',''))
     return Response(status=HTTP_200_OK)
 
 
+# @api_view(['POST'])
+# def insert(request):
+#     file= request.FILES.get('file')
+#     """commune 등록"""
+#
+#     df = pd.read_excel(file,engine='openpyxl')
+#     print(df)
+#     list = []
+#     for i in df.index:
+#         #print(i)
+#         data = {}
+#         for j,k in enumerate(df.columns):
+#             if k =='Commune clinic (English)':
+#                 data['commune_clinic'] = df.values[i][j]
+#             if k =='District':
+#                 data['district'] = df.values[i][j]
+#
+#         list.append(data)
+#     print(len(list))
+#
+#     with transaction.atomic():
+#         for temp in list:
+#             commune = CommuneClinic()
+#             commune.commune_clinic = temp['commune_clinic']
+#             print(temp['district'])
+#             district = District.objects.get(district=temp['district'])
+#
+#             commune.district_fk = district
+#
+#             commune.save()
+#             print(commune)
+#
+#     return Response()
+
+# @api_view(['POST'])
+# def insert(request):
+#     file= request.FILES.get('file')
+#     """district 만 있는 area 등록"""
+#
+#     district_set = District.objects.all()
+#
+#     with transaction.atomic():
+#         for district in district_set:
+#             area = Area()
+#             area.province_fk = Province.objects.get(province_id=2)
+#             area.district_fk = district
+#             area.save()
+#
+#
+#     return Response()
+
+# @api_view(['POST'])
+# def insert(request):
+#     file= request.FILES.get('file')
+#     """district와 commune이 있는 area 등록"""
+#
+#     commune_set = CommuneClinic.objects.all()
+#     with transaction.atomic():
+#         for commune in commune_set:
+#             area = Area()
+#             area.province_fk = Province.objects.get(province_id=2)
+#             area.district_fk = commune.district_fk
+#             area.commune_clinic_fk = commune
+#             area.save()
+#
+#
+#     return Response()
 
 
-
+# @api_view(['POST'])
+# def insert(request):
+#     file= request.FILES.get('file')
+#     """학교 등록"""
+#
+#     df = pd.read_excel(file,engine='openpyxl')
+#     #print(df)
+#     list = []
+#     for i in df.index:
+#         #print(i)
+#         data = {}
+#         for j,k in enumerate(df.columns):
+#             if k =='Commune clinic (English)':
+#                 data['commune_clinic'] = df.values[i][j]
+#                 print(data['commune_clinic'])
+#             if k =='School name':
+#                 data['School name'] = df.values[i][j]
+#
+#         list.append(data)
+#     print(list)
+#     print(len(list))
+#
+#     with transaction.atomic():
+#         for temp in list:
+#             school = School()
+#             commune = CommuneClinic.objects.get(commune_clinic=temp['commune_clinic'])
+#             school.school_name = data['School name']
+#             area = Area.objects.get(commune_clinic_fk=commune)
+#
+#             school.area_fk = area
+#             print(school.area_fk)
+#             school.save()
+#             print(school)
+#
+#     return Response()
 
 
 
@@ -523,6 +636,9 @@ def student_addAll(request):
     # with transaction.atomic():
     #     Student.objects.bulk_create(bulk_list)
 
+
+    #log(request,typ='Upload Student',
+        #content='Upload Student file')
 
 
     return Response()
