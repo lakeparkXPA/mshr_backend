@@ -14,5 +14,6 @@ urlpatterns=[
     path('delStudent/<int:student_id>/', studentHealth_student.student_delete),
     #path('insert/',studentHealth_student.insert)
     path('delStudent/',studentHealth_student.student_delete_multi),
+    path('listDownload/',studentHealth_student.student_listDownload)
 
 ]

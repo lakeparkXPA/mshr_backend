@@ -100,6 +100,39 @@ class StudentSerializer(serializers.ModelSerializer):
 
         return data
 
+class StudentDownloadSerializer(serializers.ModelSerializer):
+    """
+    학생 리스트 조회시 사용
+    """
+    class Meta:
+        model = Student
+        fields = ['student_id','student_name','grade','grade_class','student_number','date_of_birth',
+                  'gender','medical_insurance_number','village','contact','parents_name']
+    def to_representation(self, instance):
+
+        # school = SchoolSerializer(instance.student_fk).data
+        # print(school)
+        data = {}
+        school = SchoolSerializer(instance.school_fk).data
+        data['school_id'] = school['school_id']
+
+        data_instance = super().to_representation(instance)
+
+        field_list = ['student_id', 'student_name', 'grade',
+                      'grade_class', 'student_number', 'date_of_birth','gender',
+                      'medical_insurance_number', 'village', 'contact', 'parents_name']
+        for field in field_list:
+            if data_instance[field] ==None:
+                data_instance[field]=''
+
+        data.update(data_instance)
+        return data
+
+class SchoolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = School
+        fields = ['school_id']
+
 class SchoolListSerializer(serializers.ModelSerializer):
     class Meta:
         model = School

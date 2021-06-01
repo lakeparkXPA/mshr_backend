@@ -2,7 +2,8 @@ import os
 import datetime
 
 from django.db.models import Q
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, JsonResponse, HttpResponse
+import xlwt
 
 from rest_framework.decorators import *
 
@@ -169,6 +170,197 @@ def student_list(request):
 
 
     return Response(data)
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def student_listDownload(request):
+
+    """학생 리스트 다운로드 """
+
+    request = json.loads(request.body)
+
+    user_id = request.get('user_id','')
+    school_id = request.get('school_id','')
+    grade = request.get('grade','')
+    name_id = request.get('name_id','')
+
+
+    q = Q()
+    data = {}
+    """필터링 조건으로 조회할 경우"""
+    if school_id or grade or name_id:
+
+        if school_id:
+            q.add(Q(school_fk__id=school_id),q.AND)
+        if grade:
+            q.add(Q(grade=grade),q.AND)
+
+        if name_id:
+            q.add(Q(student_name=name_id) | Q(medical_insurance_number=name_id),q.AND)
+
+        try:
+            students_obj = Student.objects.select_related('school_fk').\
+                            filter(q)
+
+        except:
+            raise exceptions.ValidationError
+
+        student_serializer = StudentDownloadSerializer(students_obj,many=True)
+
+        student_list = student_serializer.data
+        data['students'] = student_list
+
+
+    else:
+
+        """유저가 확인 가능한 전체 조회할 경우"""
+
+        if user_id:
+            user = User.objects.select_related('area_fk').\
+                                    filter(user_id=user_id).\
+                                    values('user_level','area_fk','school_fk',
+                                    'area_fk__province_fk','area_fk__district_fk',
+                                    'area_fk__commune_clinic_fk')[0]
+
+
+            try:
+                if user['user_level']==0:
+
+                    """유저가 마스터 계정일경우"""
+                    students_obj = Student.objects.all()
+                    student_list = []
+                    student_serializer = StudentDownloadSerializer(students_obj,many=True).data
+                    student_list.append(student_serializer)
+
+                    data['students']=student_list
+
+
+
+
+                elif user['user_level']==1:
+
+                    """유저가 province계정 인 경우"""
+
+
+
+                    area_list = Area.objects.prefetch_related('school_set').\
+                                    prefetch_related('school_set__student_set').\
+                                    filter(province_fk=user['area_fk__province_fk'])
+
+
+                    student_list = []
+
+                    for area in area_list:
+                        for school in area.school_set.all():
+                            student_serializer = StudentDownloadSerializer(school.student_set.all(),many=True).data
+                            student_list.append(student_serializer)
+
+                    data['students'] = student_list
+
+
+
+                elif user['user_level']==2:
+
+                    area_list = Area.objects.prefetch_related('school_set').\
+                                    prfetch_related('school_set__student_set').\
+                                    filter(province_fk=user['area_fk__province_fk'],
+                                            district_fk=user['area_fk__district_fk'])
+
+                    student_list = []
+
+                    for area in area_list:
+                        for school in area.school_set.all():
+                            student_serializer = StudentDownloadSerializer(school.student_set.all(),many=True).data
+                            student_list.append(student_serializer)
+
+                    data['students'] = student_list
+
+
+
+                elif user['user_level']==3:
+
+                    """유저가 commune_clinic 계정 인 경우"""
+
+                    area_list = Area.objects.prefetch_related('school_set').\
+                                    prfetch_related('school_set__student_set').\
+                                    filter(province_fk=user['area_fk__province_fk'],
+                                            district_fk=user['area_fk__district_fk'],
+                                            commune_clinic_fk=user['area_fk__commune_clinic_fk'])
+
+                    student_list = []
+
+                    for area in area_list:
+                        for school in area.school_set.all():
+                            student_serializer = StudentDownloadSerializer(school.student_set.all(),many=True).data
+                            student_list.append(student_serializer)
+
+                    data['students'] = student_list
+
+
+
+                elif user['user_level']==4:
+
+                    student = Student.objects.select_related('school_fk').\
+                                    filter(school_fk=user['school_fk'])
+
+
+                    student_list = []
+                    student_serializer = StudentDownloadSerializer(student.all(),many=True).data
+
+                    student_list.append(student_serializer)
+                    data['students'] = student_list
+
+
+
+
+            except:
+                raise exceptions.ValidationError
+
+
+
+        else:
+            raise exceptions.ValidationError
+
+
+    response = HttpResponse(content_type="application/vnd.ms-excel")
+
+    today = datetime.datetime.today().strftime("%Y-%m-%d")
+
+    filename = 'StudentList_{}.xls'.format(today)
+
+    response['Content-Disposition'] = "attachment; filename={}".format(filename)
+
+    wb = xlwt.Workbook(encoding='utf-8')
+
+    ws = wb.add_sheet("Students")
+
+    row_num = 0
+
+
+    font_style = xlwt.XFStyle()
+
+    #headef font are bold
+    font_style.font.bold = True
+
+    columns = ['School ID','Student ID','Name','Grade','Class','Student Number','DOB',
+                  'Gender','MIN','Village','Contact','Parents']
+
+    for idx, col_name in enumerate(columns):
+        ws.write(row_num,idx,col_name,font_style)
+
+
+    data = data['students'][0]
+    for row in data:
+        row_num+=1
+        for col,value in enumerate(row.values()):
+            ws.write(row_num,col,value)
+
+
+
+    wb.save(response)
+
+    return response
+
 
 
 @api_view(['POST'])
