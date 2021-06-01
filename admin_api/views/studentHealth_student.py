@@ -425,11 +425,11 @@ def student_delete(request,student_id):
 
     try:
 
-        with transaction.atomic():
+        graduate_serializer = GraduateSerializer(data = graduate_obj,partial=True)
 
-            graduate_serializer = GraduateSerializer(data = graduate_obj,partial=True)
+        if graduate_serializer.is_valid():
 
-            if graduate_serializer.is_valid():
+            with transaction.atomic():
                 graduate_serializer.save()
 
                 graduate_obj = Graduate.objects.\
@@ -439,9 +439,9 @@ def student_delete(request,student_id):
                     checkup.save()
 
                 student_obj.delete()
-            else:
+        else:
 
-                raise exceptions.ValidationError
+            raise exceptions.ValidationError
 
     except Exception as e:
         raise exceptions.ValidationError(str(e))
@@ -452,6 +452,56 @@ def student_delete(request,student_id):
                # request.META.get('HTTP_USER_ID',''))
     return Response(status=HTTP_200_OK)
 
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def student_delete_multi(request):
+
+    """학생 정보 일괄 삭제 api"""
+    request = json.loads(request.body)
+
+    student_obj_list = Student.objects.\
+                        prefetch_related('checkup_set').\
+                        filter(student_id__in=request['student_list'])
+
+    for student_obj in student_obj_list:
+
+        checkup_set = student_obj.checkup_set.all()
+
+        graduate_obj = model_to_dict(student_obj)
+        graduate_obj.pop('student_id')
+        min = graduate_obj['medical_insurance_number']
+
+        if graduate_obj['pic'] == None or graduate_obj['pic']=='':
+            graduate_obj.pop('pic')
+
+        try:
+            graduate_serializer = GraduateSerializer(data=graduate_obj,partial=True)
+
+            if graduate_serializer.is_valid():
+                with transaction.atomic():
+                    graduate_serializer.save()
+
+                    graduate_obj = Graduate.objects.\
+                                    get(medical_insurance_number=min)
+                    for checkup in checkup_set:
+                        checkup.graduate_fk = graduate_obj
+                        checkup.save()
+
+                    student_obj.delete()
+            else:
+                raise exceptions.ValidationError
+        except Exception as e:
+            raise exceptions.ValidationError(str(e))
+
+
+    print(connection.queries)
+
+
+
+    #log(request,typ='Delete Student',
+        #content='Delete Student ' +
+               # request.META.get('HTTP_USER_ID',''))
+    return Response(status=HTTP_200_OK)
 
 # @api_view(['POST'])
 # def insert(request):
