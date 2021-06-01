@@ -234,3 +234,25 @@ def delCheckUp(request,checkup_id):
       #          request.META.get('HTTP_USER_ID', ''))
 
     return Response(status=HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def delChekUpMulti(request):
+    """체크업 다중 삭제 Api"""
+
+    request = json.loads(request.body)
+    checkup_list = request['checkup_list']
+
+    try:
+        with transaction.atomic():
+            for checkup in checkup_list:
+                checkup_obj = Checkup.objects.get(id=checkup)
+                checkup_obj.delete()
+    except:
+        raise exceptions.ValidationError("delete error")
+
+
+
+
+    return Response(status=HTTP_200_OK)
+
