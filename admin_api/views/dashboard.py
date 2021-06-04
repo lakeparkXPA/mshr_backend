@@ -242,6 +242,8 @@ def dashboard_info(request):
             grade_hc_items["grade_{}".format(student.grade)]["chest"] += 1
 
     data["grade_hc_items"] = grade_hc_items
+
+    data['status'] = 0
     return Response(data)
 
 
@@ -264,8 +266,9 @@ def dashboard_filter(request):
         user_level = User.objects.get(user_id = request.POST.get('user_id')).user_level
         print(user_level)
 
-    except exceptions as e:
-        return JsonResponse(str(e), status=HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        data['status'] = 1 #유저 id 존재 x
+        return Response(data, status=HTTP_400_BAD_REQUEST)
 
 
 
@@ -279,20 +282,24 @@ def dashboard_filter(request):
             province_list = Province.objects.all().values('province')
             data['province'] = []
 
+
+            #raise exceptions.ValidationError(data)
             for order_list in province_list:
 
                 data['province'].append(order_list['province'])
 
 
         except:
-            raise exceptions.ValidationError
+            data['status'] = 2
+            raise exceptions.ValidationError(data)
 
 
     elif filter =='district' and (user_level in[0,1]):
         """district 검색 할 경우"""
 
         if not province:
-            raise exceptions.ValidationError
+            data['status'] = 2
+            raise exceptions.ValidationError(data)
 
 
         province_obj =Province.objects.\
@@ -313,6 +320,7 @@ def dashboard_filter(request):
         "commune 검색할경우 "
 
         if not province or not district:
+            data['status'] = 2
             raise exceptions.ValidationError
 
         commune_obj = CommuneClinic.objects.select_related('district_fk').\
@@ -329,16 +337,19 @@ def dashboard_filter(request):
 
 
     elif filter == 'school' and (user_level in [0,1,2,3]):
-        print()
-        if not province or not district:
+
+        if not province or not district or not commune:
+            data['status'] = 2
             raise exceptions.ValidationError
 
 
         school_obj = School.objects.select_related('area_fk').\
             select_related('area_fk__province_fk').\
             select_related('area_fk__district_fk').\
+            select_related('area_fk__commune_clinic_fk').\
             filter(area_fk__province_fk__province=province,
-                   area_fk__district_fk__district=district).values('school_id','school_name')
+                   area_fk__district_fk__district=district,
+                   area_fk__commune_clinic_fk__commune_clinic=commune).values('school_id','school_name')
 
         data['schools'] = []
 
@@ -353,7 +364,7 @@ def dashboard_filter(request):
 
 
 
-
+    data['status'] = 0 #성공
     return JsonResponse(data, status=HTTP_200_OK)
 
 
@@ -371,10 +382,12 @@ def dashboard_notice_list(request):
 
         notice_list = {}
         notice_list['notice'] = notice_serializer.data
-
+        notice_list['status'] = 0
 
     except:
-        raise exceptions.ValidationError
+        data = {}
+        data['status'] = 3
+        raise exceptions.APIException(data)
 
     return Response(notice_list)
 
@@ -404,9 +417,11 @@ def dashboard_notice(request,notice_id):
         notice['file_name'] = file_list
 
     except:
-        raise exceptions.ValidationError
+        data = {}
+        data['status']= 1
+        raise exceptions.APIException(data)
 
-
+    notice['status'] = 0
     return Response(notice)
 
 
@@ -420,6 +435,7 @@ def dashboard_notice_img(request,notice_id):
     notice_file = NoticeFile.objects.get(notice_fk=notice_id).file_name
     if notice_file is None:
         return Response()
+
 
     return FileResponse(notice_file,as_attachment=True)
 

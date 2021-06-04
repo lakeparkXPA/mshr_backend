@@ -6,38 +6,34 @@ import unittest
 
 
 
-class DashBoardNoticeTest(TestCase):
+class DashBoardNoticeTest(unittest.TestCase):
     def setUp(self):
         """사전 작업 """
+        print("1")
         pass
 
     def tearDown(self):
+        print("2")
         """테스트 데이터 삭제"""
         pass
 
-
-    def test_notice_list_get(self):
-
-        client = Client()
-
-        response = client.get('/admin_api/dashboard/notice/',content_type='application/json')
-
-        self.assertEqual(response.status_code,200)
-
-
-class DashBoardFilterTest(TestCase):
+    # def test_notice_list_get(self):
+    #
+    #     client = Client()
+    #     print("3")
+    #     response = client.get('/admin_api/dashboard/notice/',content_type='application/json')
+    #
+    #     self.assertEqual(response.status_code,200)
     def test_dashboard_filter(self):
         client = Client()
-
-        data = {
-            'filter' : 'commune',
-            'user_id' : 'test1',
-            'province' : 'test1',
-            'district' : 'test2'
-        }
+        print("5")
 
 
-        print(json.dumps(data))
-        response = client.post('/admin_api/dashboard/location/',json.dumps(data),content_type='application/x-www-form-urlencoded')
-        print(connection.queries)
+
+        response = client.post('/admin_api/studentHealth/student/addStudent/',
+                               {"info": {"school_fk" : 3,
+                                    "student_name": "test"}})
+
+        print(response.json())
         self.assertEqual(response.status_code,200)
+

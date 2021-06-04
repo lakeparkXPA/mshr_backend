@@ -21,7 +21,7 @@ import datetime
 from admin_api.package.log import log
 from rest_framework_jwt.views import obtain_jwt_token
 from rest_framework.parsers import MultiPartParser
-
+import bcrypt
 from mshr_backend.settings import ALGORITHM, SECRET_KEY, BASE_DIR
 from mshr_backend.settings import STATIC_DIR
 from admin_api.custom import *
@@ -37,53 +37,64 @@ def refresh_token(request):
     '''
     토큰 재발급 API
     '''
-    try:
+    #try:
         # user_id = request.META.get('HTTP_USER_ID','')
         # if not user_id:
         #     raise exceptions.ValidationError
         # obj = User.objects.get(user_id= user_id)
 
+    data = {}
 
-        obj = User.objects.get(user_id=request.data['user_id'])
-        verified_token = RefreshTokenSerializer(obj).data['token']
+    obj = User.objects.get(user_id=request.data['user_id'])
 
+    """데이터 베이스 내 갱신 토큰 확인 """
+    verified_token = RefreshTokenSerializer(obj).data['token']
+
+
+    try:
         decoded_token = jwt.decode(verified_token, SECRET_KEY, ALGORITHM)
-
-        try:
-            if request.META.get('HTTP_AUTHORIZATION') is None:
-                raise exceptions.NotAuthenticated()
-
-            else:
-                client_token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
+    except:
+        data['status'] =1
+        print("token expired")
+        raise exceptions.NotAuthenticated(data)
 
 
-                client_decoded_token = jwt.decode(client_token,SECRET_KEY,ALGORITHM)
+    if request.META.get('HTTP_AUTHORIZATION') is None:
+        data['status']=2
+        raise exceptions.NotAuthenticated(data)
 
-                if decoded_token['auth'] == 'refresh' and \
-                    client_decoded_token['auth'] =='refresh' and \
-                        decoded_token == client_decoded_token:
+    client_token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
 
-                    payload = {}
-                    payload['auth'] = 'access'
+    try:
+        client_decoded_token = jwt.decode(client_token,SECRET_KEY,ALGORITHM)
+    except:
+        data['status'] =1
+        print("token expired")
+        raise exceptions.NotAuthenticated(data)
 
-                    payload['exp'] = datetime.datetime.utcnow() + \
-                                    datetime.timedelta(hours=1)
+    if decoded_token['auth'] == 'refresh' and \
+        client_decoded_token['auth'] =='refresh' and \
+        decoded_token == client_decoded_token:
 
-                    access_token = jwt.encode(payload, SECRET_KEY, ALGORITHM)
+        payload = {}
 
-                    data = {}
-                    data['access_token'] = access_token
+        payload['auth'] = 'access'
 
-                    return Response(data)
+        payload['exp'] = datetime.datetime.utcnow() + \
+                        datetime.timedelta(hours=1)
 
-                else:
-                    return Response('Error: invalidated token', status=HTTP_401_UNAUTHORIZED)
+        access_token = jwt.encode(payload, SECRET_KEY, ALGORITHM)
 
-        except Exception as e:
-            return Response('Error: ' + str(e),status=HTTP_400_BAD_REQUEST)
 
-    except Exception as e:
-        return Response('Error : ' + str(e), status=HTTP_400_BAD_REQUEST)
+        data['access_token'] = access_token
+        data['status'] = 0
+        return Response(data)
+
+    else:
+        data['status']=1
+
+        return Response(data, status=HTTP_401_UNAUTHORIZED)
+
 
 
 
@@ -95,14 +106,28 @@ def login(request):
     '''
     Login Api
     '''
+    pw = request.POST.get('password','')
+
+    data = {}
+
+    if not pw:
+
+        data['status']=3
+        raise exceptions.ValidationError(data)
+
 
     try:
-
         obj = User.objects.get(user_id=request.data['user_id'])
-        user = LoginSerializer(obj).data
+    except:
+        data['status']=2
+        print("user id error")
+        raise exceptions.ValidationError(data)
+
+    user = LoginSerializer(obj).data
+    try:
 
         if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:
-
+        #if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
             payload = {}
             payload['auth'] = 'access'
 
@@ -122,7 +147,7 @@ def login(request):
             refresh_token = jwt.encode(refresh_payload,SECRET_KEY,ALGORITHM)
 
 
-            data = {}
+
 
             data['access_token'] = access_token
             data['refresh_token'] = refresh_token
@@ -131,15 +156,19 @@ def login(request):
             obj.save()
 
             # log(request,typ='Log in', content='Login success')
-
+            data['status'] = 0
             return Response(data)
 
 
         else:
-            return Response("password incorrupt",status=HTTP_200_OK)
+            data['status'] = 1
+            print("password incorrupt")
+            return Response(data,status=HTTP_200_OK)
 
     except Exception as e:
-        return Response('Error : ' + str(e),status=HTTP_400_BAD_REQUEST)
+        data['status'] = 4
+        print(str(e))
+        return Response(data,status=HTTP_400_BAD_REQUEST)
 
 
 
