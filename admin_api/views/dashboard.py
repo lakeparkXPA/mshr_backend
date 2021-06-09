@@ -11,7 +11,7 @@ from admin_api.serializers import *
 from mshr_backend.settings import STATIC_DIR
 from admin_api.custom import *
 from django.db import connection
-
+import json
 
 @api_view(['POST'])
 #@permission_classes([AllAuthenticated])
@@ -19,13 +19,17 @@ def dashboard_info(request):
     """
     대시보드 건강검진 현황 조회 및 차트
     """
-    user_id = request.POST.get('user_id','')
-    province = request.POST.get('province','')
-    district = request.POST.get('district','')
-    commune = request.POST.get('commune','')
-    school_id = request.POST.get('school_id','')
-    start_date = request.POST.get('start_date','')
-    end_date = request.POST.get('end_date','')
+
+    request = json.loads(request.body)
+    header = {}
+
+    user_id = request.get('user_id','')
+    province = request.get('province','')
+    district = request.get('district','')
+    commune = request.get('commune','')
+    school_id = request.get('school_id','')
+    start_date = request.get('start_date','')
+    end_date = request.get('end_date','')
 
     if start_date and end_date:
         start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")\
@@ -243,8 +247,10 @@ def dashboard_info(request):
 
     data["grade_hc_items"] = grade_hc_items
 
-    data['status'] = 0
-    return Response(data)
+    #data['status'] = 0
+
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(data,headers=header,status=HTTP_200_OK)
 
 
 
@@ -254,11 +260,15 @@ def dashboard_filter(request):
     '''
     대시보드 province, district,school 필터링
     '''
-    filter = request.POST.get('filter','')
-    province = request.POST.get('province','')
-    district = request.POST.get('district', '')
-    commune = request.POST.get('commune','')
-    school = request.POST.get('school_name', '')
+
+    request = json.loads(request.body)
+    header = {}
+
+    filter = request.get('filter','')
+    province = request.get('province','')
+    district = request.get('district', '')
+    commune = request.get('commune','')
+    school = request.get('school_name', '')
 
     data = {}
 
@@ -267,8 +277,9 @@ def dashboard_filter(request):
         print(user_level)
 
     except Exception as e:
-        data['status'] = 1 #유저 id 존재 x
-        return Response(data, status=HTTP_400_BAD_REQUEST)
+        #data['status'] = 1 #유저 id 존재 x
+        header['HTTP_X_CSTATUS'] =1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
 
@@ -290,16 +301,18 @@ def dashboard_filter(request):
 
 
         except:
-            data['status'] = 2
-            raise exceptions.ValidationError(data)
+            #data['status'] = 2
+            header['HTTP_X_CSTATUS'] = 2
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+            #raise exceptions.ValidationError(data)
 
 
     elif filter =='district' and (user_level in[0,1]):
         """district 검색 할 경우"""
 
         if not province:
-            data['status'] = 2
-            raise exceptions.ValidationError(data)
+            header['HTTP_X_CSTATUS'] = 2
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
         province_obj =Province.objects.\
@@ -320,8 +333,8 @@ def dashboard_filter(request):
         "commune 검색할경우 "
 
         if not province or not district:
-            data['status'] = 2
-            raise exceptions.ValidationError
+            header['HTTP_X_CSTATUS'] = 2
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
         commune_obj = CommuneClinic.objects.select_related('district_fk').\
                         filter(district_fk__district=district)
@@ -329,6 +342,7 @@ def dashboard_filter(request):
         commune_list = CommuneSerializer(commune_obj,many=True).data
         print(connection.queries)
         data['commune'] = []
+
         for commune in commune_list:
             data['commune'].append(commune['commune_clinic'])
 
@@ -339,8 +353,8 @@ def dashboard_filter(request):
     elif filter == 'school' and (user_level in [0,1,2,3]):
 
         if not province or not district or not commune:
-            data['status'] = 2
-            raise exceptions.ValidationError
+            header['HTTP_X_CSTATUS'] = 2
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
         school_obj = School.objects.select_related('area_fk').\
@@ -364,8 +378,10 @@ def dashboard_filter(request):
 
 
 
-    data['status'] = 0 #성공
-    return JsonResponse(data, status=HTTP_200_OK)
+    #data['status'] = 0 #성공
+    header['HTTP_X_CSTATUS'] = 0
+
+    return JsonResponse(data,headers=header, status=HTTP_200_OK)
 
 
 
@@ -376,6 +392,7 @@ def dashboard_notice_list(request):
     공지사항 list 조회 api
     """
 
+    header = {}
     try:
         notice_list_obj = Notice.objects.all()
         notice_serializer = NoticeListSerializer(notice_list_obj,many=True)
@@ -385,11 +402,14 @@ def dashboard_notice_list(request):
         notice_list['status'] = 0
 
     except:
-        data = {}
-        data['status'] = 3
-        raise exceptions.APIException(data)
 
-    return Response(notice_list)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+        #raise exceptions.APIException(data)
+
+    header['HTTP_X_CSTATUS'] = 0
+
+    return Response(notice_list,headers=header,status=HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -400,7 +420,7 @@ def dashboard_notice(request,notice_id):
     """
     공지사항 상세조회 api
     """
-
+    header = {}
     try:
 
         notice_obj = Notice.objects.prefetch_related('noticefile_set').\
@@ -417,12 +437,14 @@ def dashboard_notice(request,notice_id):
         notice['file_name'] = file_list
 
     except:
-        data = {}
-        data['status']= 1
-        raise exceptions.APIException(data)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-    notice['status'] = 0
-    return Response(notice)
+
+    #notice['status'] = 0
+    header['HTTP_X_CSTATUS'] = 0
+
+    return Response(notice,headers=header)
 
 
 @api_view(['GET'])
@@ -436,8 +458,10 @@ def dashboard_notice_img(request,notice_id):
     if notice_file is None:
         return Response()
 
+    header = {}
+    header['HTTP_X_CSTATUS'] = 0
 
-    return FileResponse(notice_file,as_attachment=True)
+    return FileResponse(notice_file,headers=header,as_attachment=True)
 
 
 

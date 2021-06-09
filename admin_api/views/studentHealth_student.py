@@ -25,11 +25,14 @@ from django.db import transaction
 def student_list(request):
 
     """학생 리스트 조회"""
-    user_id = request.POST.get('user_id','')
-    school_id = request.POST.get('school_id','')
-    grade = request.POST.get('grade','')
-    name_id = request.POST.get('name_id','')
+    request = json.loads(request.body)
 
+    user_id = request.get('user_id','')
+    school_id = request.get('school_id','')
+    grade = request.get('grade','')
+    name_id = request.get('name_id','')
+
+    header = {}
 
     q = Q()
     data = {}
@@ -49,8 +52,11 @@ def student_list(request):
                             filter(q)
 
         except:
-            data['status'] = 3
-            raise exceptions.ValidationError(data)
+            #data['status'] = 3
+            header['HTTP_X_CSTATUS'] = 3
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
+            #raise exceptions.ValidationError(data)
 
         student_serializer = StudentSerializer(students_obj,many=True)
 
@@ -161,17 +167,19 @@ def student_list(request):
 
 
             except:
-                data['status'] = 2
-                raise exceptions.APIException(data)
+                header['HTTP_X_CSTATUS'] = 2
+                return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+
 
 
 
         else:
-            data['status']=1
-            raise exceptions.ValidationError(data)
+            header['HTTP_X_CSTATUS'] = 1
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-    data['status'] = 0
-    return Response(data)
+    #data['status'] = 0
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(data,headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
@@ -189,6 +197,7 @@ def student_listDownload(request):
 
     q = Q()
     data = {}
+    header = {}
     """필터링 조건으로 조회할 경우"""
     if school_id or grade or name_id:
 
@@ -205,8 +214,8 @@ def student_listDownload(request):
                             filter(q)
 
         except:
-            data['status'] = 3
-            raise exceptions.ValidationError(data)
+            header['HTTP_X_CSTATUS'] = 3
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
         student_serializer = StudentDownloadSerializer(students_obj,many=True)
 
@@ -317,14 +326,14 @@ def student_listDownload(request):
 
 
             except:
-                data['status']=2
-                raise exceptions.ValidationError
+                header['HTTP_X_CSTATUS'] = 2
+                return Response(headers=header, status=HTTP_400_BAD_REQUEST)
 
 
 
         else:
-            data['status'] = 1
-            raise exceptions.ValidationError
+            header['HTTP_X_CSTATUS'] = 1
+            return Response(headers=header, status=HTTP_400_BAD_REQUEST)
 
 
     response = HttpResponse(content_type="application/vnd.ms-excel")
@@ -373,11 +382,15 @@ def student_listDownload(request):
 def school_list(request):
 
     """Student 학교 명단 조회 시 사용 API"""
-    user_id = request.POST.get('user_id','')
+    request = json.loads(request.body)
+
+    user_id = request.get('user_id','')
 
 
 
     data = {}
+    header = {}
+
     try:
 
         user = User.objects.select_related('area_fk'). \
@@ -386,8 +399,11 @@ def school_list(request):
                    'area_fk__province_fk', 'area_fk__district_fk',
                    'area_fk__commune_clinic_fk')[0]
     except:
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        #data['status'] = 1
+
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
     try:
@@ -430,8 +446,8 @@ def school_list(request):
             schools_obj = School.objects.filter(id=user['school_fk'])
 
     except:
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
 
@@ -440,20 +456,21 @@ def school_list(request):
 
 
     data['schools'] = school_serializer
-    data['status']=0
-    return Response(data)
+    header['HTTP_X_CSTATUS'] = 0
+
+    return Response(data, headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
 #@permission_classes([AllAuthenticated])
 def student_add(request):
     """학생 등록 api"""
 
-    #student_data = request.POST.get('info','')
-    student_data = json.loads(request.body)
-    print(student_data)
+    student_data = request.POST.get('info','')
+    #student_data = json.loads(request.body)
+    #print(student_data)
     #print(student_data)
     #student_data = json.loads(student_data)
-    student_data = student_data['info']
+    #student_data = student_data['info']
 
     file_data = request.FILES.get('file','')
 
@@ -461,6 +478,7 @@ def student_add(request):
         student_data['pic'] =file_data
 
     data = {}
+    header = {}
 
     """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
     if Student.objects\
@@ -469,24 +487,27 @@ def student_add(request):
             Graduate.objects.\
                     filter(medical_insurance_number=student_data['medical_insurance_number'])\
                     .exists():
-        data['status'] = 1
-        return Response(data,status=HTTP_409_CONFLICT)
+
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_409_CONFLICT)
 
 
     student_obj = AddStudentSerializer(data=student_data,partial=True)
     if student_obj.is_valid():
          student_obj.save()
     else:
-        data['status'] = 2
+        #data['status'] = 2
+        header['HTTP_X_CSTATUS'] = 2
         print("Student Enrollment Failed")
-        raise exceptions.ValidationError
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
     #log(request,typ='Add Student',
         #content='Insert Student ' +
                # request.META.get('HTTP_USER_ID',''))
-    data['status'] = 0
-    return Response(data,status=HTTP_201_CREATED)
+    #data['status'] = 0
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_201_CREATED)
 
 
 
@@ -499,11 +520,15 @@ def student_get(request,student_id):
     """학생 수정시 학생 정보 로딩 api"""
 
     print(student_id)
-    print(student_id)
+    #print(student_id)
     data = {}
+    header = {}
+
     if student_id is None:
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        #data['status'] = 1
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
     student_obj = Student.objects.get(student_id=student_id)
@@ -513,9 +538,10 @@ def student_get(request,student_id):
     student_serializer.pop('pic')
 
     data['info'] = student_serializer
-    data['status'] = 0
 
-    return Response(data)
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(data,headers=header, status=HTTP_200_OK)
+
 
 @api_view(['GET'])
 @permission_classes([AllAuthenticated])
@@ -524,15 +550,20 @@ def student_get_img(request,student_id):
     "학생 수정시 학생 이미지 로딩 api"
 
     data = {}
+    header = {}
+
     if student_id is None:
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        #data['status'] = 1
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
     student_pic = Student.objects.get(student_id=student_id).pic
     if student_pic is None:
-        return Response()
+        header['HTTP_X_CSTATUS'] = 0
+        return Response(headers=header,status=HTTP_200_OK)
 
-    return FileResponse(student_pic)
+    return FileResponse(student_pic,headers=header,status=HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -540,11 +571,16 @@ def student_get_img(request,student_id):
 def min_check(request):
 
     """min 중복여부 체크 api"""
-    min = request.POST.get('min','')
+    request = json.loads(request.body)
+    min = request.get('min','')
+
     data = {}
+    header = {}
     if not min:
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        #data['status'] = 1
+        header['status'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -559,8 +595,10 @@ def min_check(request):
     else:
         data['check'] = True
 
-    data['status'] = 0
-    return Response(data)
+    #data['status'] = 0
+    header['status'] = 0
+
+    return Response(data,headers=header,status=HTTP_200_OK)
 
 
 @api_view(['PUT'])
@@ -568,11 +606,13 @@ def min_check(request):
 def student_modify(request):
     """학생 정보 수정시 사용 api"""
 
+
     student_data = request.POST.get('info','')
     student_data = json.loads(student_data)
 
     file_data = request.FILES.get('file','')
 
+    header = {}
     if file_data:
         student_data['pic'] = file_data
 
@@ -581,9 +621,11 @@ def student_modify(request):
         student_obj = Student.objects.get(student_id=student_id)
 
     except:
-        data = {}
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        #data = {}
+        #data['status'] = 1
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -600,18 +642,20 @@ def student_modify(request):
             if file_data and os.path.isfile(origin_img.path):
                 os.remove(origin_img.path)
     except:
-        data ={}
-        data['status'] = 2
-        raise exceptions.ValidationError(data)
+        #data ={}
+        #data['status'] = 2
+        header['HTTP_X_CSTATUS'] = 2
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
     #log(request,typ='Update Student',
         #content='Update Student ' +
                # request.META.get('HTTP_USER_ID',''))
 
-        data ={}
-        data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_200_OK)
 
 
 
@@ -620,11 +664,15 @@ def student_modify(request):
 def student_delete(request,student_id):
 
     """학생 정보 삭제 api"""
-    data = {}
+
+    header = {}
+
     if student_id is None:
-        data['status'] = 1
+        #data['status'] = 1
+        header['HTTP_X_CSTATUS'] = 1
         print("student_id error")
-        raise exceptions.ValidationError(data)
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
     try:
@@ -632,9 +680,10 @@ def student_delete(request,student_id):
                         prefetch_related('checkup_set').\
                         get(student_id=student_id)
     except:
-        data['status']= 2
+        #data['status']= 2
+        header['HTTP_X_CSTATUS'] = 2
         print("student does not exist")
-        raise exceptions.ValidationError(data)
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
     checkup_set = student_obj.checkup_set.all()
@@ -671,15 +720,17 @@ def student_delete(request,student_id):
             raise exceptions.ValidationError
 
     except Exception as e:
-        data['status'] = 3
-        raise exceptions.APIException(data)
+        #data['status'] = 3
+        header['HTTP_X_CSTATUS'] = 3
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
     #log(request,typ='Delete Student',
         #content='Delete Student ' +
                # request.META.get('HTTP_USER_ID',''))
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
@@ -693,6 +744,7 @@ def student_delete_multi(request):
                         filter(student_id__in=request['student_list'])
 
     data = {}
+    header = {}
 
     for student_obj in student_obj_list:
 
@@ -722,8 +774,10 @@ def student_delete_multi(request):
             else:
                 raise exceptions.ValidationError
         except Exception as e:
-            data['status'] = 1
-            raise exceptions.ValidationError(data)
+            #data['status'] = 1
+            header['HTTP_X_CSTATUS'] = 1
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
     print(connection.queries)
@@ -733,8 +787,9 @@ def student_delete_multi(request):
     #log(request,typ='Delete Student',
         #content='Delete Student ' +
                # request.META.get('HTTP_USER_ID',''))
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+    #data['status'] = 0
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_200_OK)
 
 # @api_view(['POST'])
 # def insert(request):
@@ -852,10 +907,13 @@ def student_addAll(request):
     file = request.FILES.get('file','')
 
     res = {}
-
+    header = {}
     if not file:
         res['status'] = 1
-        raise exceptions.ValidationError(res)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
+
     print(file)
     file_check = str(file)
 
@@ -928,5 +986,6 @@ def student_addAll(request):
         #content='Upload Student file')
 
     res['status'] = 0
-    return Response(res,status=HTTP_201_CREATED)
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_201_CREATED)
 

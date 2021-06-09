@@ -24,15 +24,18 @@ from django.db import transaction
 def list(request):
 
     """체크업 리스트 조회 API"""
+    request = json.loads(request.body)
 
-    school_id = request.POST.get('school_id','')
-    start_date = request.POST.get('start_date','')
-    end_date = request.POST.get('end_date','')
-    checked = request.POST.get('checked','')
-    grade = request.POST.get('grade','')
-    name = request.POST.get('name','')
+
+    school_id = request.get('school_id','')
+    start_date = request.get('start_date','')
+    end_date = request.get('end_date','')
+    checked = request.get('checked','')
+    grade = request.get('grade','')
+    name = request.get('name','')
 
     data = {}
+    header = {}
 
     if start_date and end_date:
         start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")\
@@ -63,9 +66,11 @@ def list(request):
     #q.add(Q(graduate_fk=None),Q.AND)
     try:
         checkup = Checkup.objects.select_related('student_fk').select_related('student_fk__school_fk').filter(q)
+
     except Exception as e:
-        data['status'] =1
-        raise exceptions.ValidationError(data)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+        #raise exceptions.ValidationError(data)
     #print(checkup)
 
 
@@ -77,8 +82,9 @@ def list(request):
 
     print(connection.queries)
     #print(checkup)
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+    #data['status'] = 0
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(data,headers=header,status=HTTP_200_OK)
 
 
 
@@ -87,19 +93,22 @@ def list(request):
 def stuList(request):
 
     """체크업 등록시 학생 정보 조회"""
+    request = json.loads(request.body)
 
-    school_id = request.POST.get('school_id','')
-    grade = request.POST.get('grade','')
+    school_id = request.get('school_id','')
+    grade = request.get('grade','')
 
 
     q = Q()
 
 
     data = {}
-
+    header = {}
     if school_id =='':
-        data['status'] =1
-        raise exceptions.ValidationError(data)
+
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+        #raise exceptions.ValidationError(data)
     else:
         q.add(Q(school_fk=school_id),Q.AND)
 
@@ -111,15 +120,18 @@ def stuList(request):
         students_obj = Student.objects.filter(q)
 
     except Exception as e:
-        data['status'] =1
-        raise exceptions.ValidationError(data)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
     students_serializer = StudentListSerializer(students_obj,many=True).data
 
 
     data['students'] = students_serializer
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+    #data['status'] = 0
+
+    header['HTTP_X_CSTATUS'] = 0
+
+    return Response(data,headers=header,status=HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -127,13 +139,17 @@ def stuList(request):
 def addCheckUp(request):
     """빈 체크업 등록 페이지"""
 
-    student_id = request.POST.get('student_id','')
+    request = json.loads(request.body)
+
+    student_id = request.get('student_id','')
 
     data = {}
+    header = {}
     """같은날 체크업은 1개만 등록"""
     if student_id == '':
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        header['HTTP_X_CSTATUS'] =1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
     else:
 
         """체크업은 개인당 하루에 최대 1개"""
@@ -141,13 +157,15 @@ def addCheckUp(request):
             .filter(student_fk=student_id,
                     date=datetime.datetime.today().strftime("%Y-%m-%d"))\
                     .exists():
-            data['status']=2
-            raise exceptions.ValidationError(data)
+            header['HTTP_X_CSTATUS'] = 2
+            return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+
         try:
             student = Student.objects.get(student_id=student_id)
+
         except:
-            data['status']=1
-            raise exceptions.ValidationError(data)
+            header['HTTP_X_CSTATUS'] = 1
+            return Response(headers=header, status=HTTP_400_BAD_REQUEST)
 
         checkup = Checkup(student_fk=student,date=datetime.datetime.today().strftime("%Y-%m-%d"))
 
@@ -158,9 +176,10 @@ def addCheckUp(request):
     #log(request,typ='Add Health Check-up',
      #   content='Insert Health Check-up ' +
       #          request.META.get('HTTP_USER_ID', ''))
-    data['status']=0
+    #data['status']=0
+    header['HTTP_X_CSTATUS'] = 0
 
-    return Response(data,status=HTTP_201_CREATED)
+    return Response(data,headers=header,status=HTTP_201_CREATED)
 
 
 
@@ -170,10 +189,14 @@ def addCheckUp(request):
 def modiCheckUp(request):
     """체크업 수정 api"""
 
-    checkup_data = request.POST.get('info','')
+    request = json.loads(request.body)
+
+    checkup_data = request.get('info','')
     print(checkup_data)
-    checkup_data = json.loads(checkup_data)
+
+
     data = {}
+    header = {}
     try:
         checkup_obj = Checkup.objects.get(id=checkup_data['id'])
 
@@ -185,16 +208,21 @@ def modiCheckUp(request):
             raise exceptions.ValidationError("Cannot update checkup data")
 
     except Exception as e:
-        data['status'] = 1
-        raise exceptions.ValidationError(data)
+        #data['status'] = 1
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
 
 
     #log(request,typ='Update Health Check-up',
      #   content='Update Health Check-up ' +
       #          request.META.get('HTTP_USER_ID', ''))
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+
+    #data['status'] = 0
+
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_200_OK)
 
 
 
@@ -202,12 +230,16 @@ def modiCheckUp(request):
 @permission_classes([AllAuthenticated])
 def getCheckUp(request):
     """체크업 상세 조회 api"""
-    school_id = request.POST.get('school_id','')
-    student_id = request.POST.get('student_id','')
-    checkup_id = request.POST.get('checkup_id','')
+
+    request = json.loads(request.body)
+
+    school_id = request.get('school_id','')
+    student_id = request.get('student_id','')
+    checkup_id = request.get('checkup_id','')
 
 
     data ={}
+    header = {}
 
     if checkup_id:
         try:
@@ -219,19 +251,25 @@ def getCheckUp(request):
             data['info'] = checkup_serializer
 
         except:
-            data['status']= 1
+            #data['status']= 1
             print("Does not exist checkup.")
-            raise exceptions.ValidationError(data)
+
+            header['HTTP_X_CSTATUS'] = 1
+            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+
 
     else:
-        data['status'] = 1
+        #data['status'] = 1
         print("check up id error")
-        raise exceptions.ValidationError(data)
+
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header, status=HTTP_400_BAD_REQUEST)
 
 
 
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(data,headers=header,status=HTTP_200_OK)
 
 
 @api_view(['DELETE'])
@@ -241,21 +279,24 @@ def delCheckUp(request,checkup_id):
 
 
     data = {}
+    header = {}
+
     try:
         checkup_obj = Checkup.objects.get(id=checkup_id)
 
         checkup_obj.delete()
     except:
-        data['status'] = 1
         print("can't not delete check up.")
-        raise exceptions.ValidationError(data)
+
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
     #log(request,typ='Delete Health Check-up',
      #   content='Delete Health Check-up ' +
       #          request.META.get('HTTP_USER_ID', ''))
 
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
@@ -265,18 +306,19 @@ def delChekUpMulti(request):
     request = json.loads(request.body)
     checkup_list = request['checkup_list']
 
-    data = {}
+
+    header = {}
+
     try:
         with transaction.atomic():
             for checkup in checkup_list:
                 checkup_obj = Checkup.objects.get(id=checkup)
                 checkup_obj.delete()
     except:
-        data['status'] = 1
-        raise exceptions.APIException(data)
 
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-
-    data['status'] = 0
-    return Response(data,status=HTTP_200_OK)
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_200_OK)
 

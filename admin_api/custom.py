@@ -1,24 +1,29 @@
 from django.core.serializers import json
+
+from django.core.exceptions import PermissionDenied
+from django.db import connections, models
+from django.http import Http404
+
+
+from rest_framework import exceptions
 from rest_framework.response import Response
 
 
+from rest_framework.views import exception_handler
 
-# def base_exception_handler(exc, context):
-#     print("handler")
-#     print(context)
-#     print(repr(exc))
-#     data = {}
-#     data['error'] = context
-#     # Call REST framework's default exception handler first,
-#     # to get the standard error response.
-#     #response = exception_handler(exc, context)
-#     #
-#     # # Now add the HTTP status code to the response.
-#     # if response is not None:
-#     #     response.data['status_code'] = response.status_code
-#
-#     return Response("error",status=400)
-from admin_api.serializers import StudentSerializer
-from mshr_backend.settings import MEDIA_URL
+
+def custom_exception_handler(exc, context):
+    # Call REST framework's default exception handler first,
+    # to get the standard error response.
+
+    response = exception_handler(exc, context)
+
+    # Now add the HTTP status code to the response.
+    if response is not None:
+        response.data['status_code'] = response.status_code
+
+    return response
+
+
 
 

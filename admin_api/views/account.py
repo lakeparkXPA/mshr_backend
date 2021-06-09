@@ -44,7 +44,7 @@ def refresh_token(request):
         # obj = User.objects.get(user_id= user_id)
 
     data = {}
-
+    header = {}
     obj = User.objects.get(user_id=request.data['user_id'])
 
     """데이터 베이스 내 갱신 토큰 확인 """
@@ -54,23 +54,30 @@ def refresh_token(request):
     try:
         decoded_token = jwt.decode(verified_token, SECRET_KEY, ALGORITHM)
     except:
-        data['status'] =1
+        #data['status'] =1
+        header['HTTP_X_CSTATUS'] = 1
         print("token expired")
-        raise exceptions.NotAuthenticated(data)
+        return Response(headers= header,status=HTTP_401_UNAUTHORIZED)
+       #raise exceptions.NotAuthenticated(data)
 
 
     if request.META.get('HTTP_AUTHORIZATION') is None:
-        data['status']=2
-        raise exceptions.NotAuthenticated(data)
+        #data['status']=2
+        header['HTTP_X_CSTATUS'] = 2
+        return Response(headers=header, status=HTTP_401_UNAUTHORIZED)
+        #raise exceptions.NotAuthenticated(data)
 
+    print("test")
     client_token = request.META.get('HTTP_AUTHORIZATION').split(" ")[1]
 
     try:
         client_decoded_token = jwt.decode(client_token,SECRET_KEY,ALGORITHM)
     except:
-        data['status'] =1
+        #data['status'] =1
         print("token expired")
-        raise exceptions.NotAuthenticated(data)
+        header['HTTP_X_CSTATUS'] =1
+        return Response(headers=header, status=HTTP_401_UNAUTHORIZED)
+        #raise exceptions.NotAuthenticated(data)
 
     if decoded_token['auth'] == 'refresh' and \
         client_decoded_token['auth'] =='refresh' and \
@@ -87,13 +94,15 @@ def refresh_token(request):
 
 
         data['access_token'] = access_token
-        data['status'] = 0
-        return Response(data)
+        #data['status'] = 0
+        header['HTTP_X_CSTATUS'] = 0
+
+        return Response(data,headers=header,status=HTTP_200_OK)
 
     else:
         data['status']=1
-
-        return Response(data, status=HTTP_401_UNAUTHORIZED)
+        header['HTTP_X_CSTATUS'] = 1
+        return Response(data,headers=header, status=HTTP_401_UNAUTHORIZED)
 
 
 
@@ -106,28 +115,35 @@ def login(request):
     '''
     Login Api
     '''
-    pw = request.POST.get('password','')
+    #pw = request.POST.get('password','')
+    request = json.loads(request.body)
+
+    pw = request.get('password','')
 
     data = {}
-
+    header = {}
     if not pw:
 
-        data['status']=3
-        raise exceptions.ValidationError(data)
+        #data['status']=3
+        header['HTTP_X_CSTATUS']= 3
+        return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+        #raise exceptions.ValidationError(data)
 
 
     try:
         obj = User.objects.get(user_id=request.data['user_id'])
     except:
-        data['status']=2
+        #data['status']=2
         print("user id error")
-        raise exceptions.ValidationError(data)
+        header['HTTP_X_CSTATUS']=2
+        return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+
 
     user = LoginSerializer(obj).data
     try:
-
-        if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:
-        #if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
+        if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
+        #if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:
+        #if True:
             payload = {}
             payload['auth'] = 'access'
 
@@ -156,19 +172,21 @@ def login(request):
             obj.save()
 
             # log(request,typ='Log in', content='Login success')
-            data['status'] = 0
-            return Response(data)
+            header['HTTP_X_CSTATUS'] = 0
+            return Response(data, headers=header,status=HTTP_200_OK)
 
 
         else:
-            data['status'] = 1
+            #data['status'] = 1
             print("password incorrupt")
-            return Response(data,status=HTTP_200_OK)
+            header['HTTP_X_CSTATUS'] =1
+            return Response(data,headers=header,status=HTTP_200_OK)
 
     except Exception as e:
         data['status'] = 4
         print(str(e))
-        return Response(data,status=HTTP_400_BAD_REQUEST)
+        header['HTTP_X_CSTATUS']=4
+        return Response(data,headers=header,status=HTTP_400_BAD_REQUEST)
 
 
 
