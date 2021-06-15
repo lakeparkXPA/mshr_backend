@@ -11,4 +11,5 @@ urlpatterns=[
     path('getCheckUp/',studentHealth_healthCheckUp.getCheckUp),
     path('delCheckUp/<int:checkup_id>',studentHealth_healthCheckUp.delCheckUp),
     path('delCheckUp/',studentHealth_healthCheckUp.delChekUpMulti),
+    path('fileCheckUpList/',studentHealth_healthCheckUp.CheckUpDownList),
     ]

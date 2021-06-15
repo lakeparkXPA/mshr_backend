@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import simplejwt as simplejwt
@@ -138,6 +139,11 @@ class SchoolListSerializer(serializers.ModelSerializer):
         model = School
         fields = ['school_name','id']
 
+class SchoolDownLoadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = School
+        #fields = ['school_name,school_id']
+        fields = '__all__'
 
 class AddStudentSerializer(serializers.ModelSerializer):
     """학생 등록시 사용"""
@@ -199,6 +205,7 @@ class CheckUpSerializer(serializers.ModelSerializer):
 
         if instance.student_fk:
             student = StudentSerializer(instance.student_fk).data
+
             data['school_id'] = instance.student_fk.school_fk.school_id
             data['medical_insurance_number'] = student['medical_insurance_number']
             data['student_name'] = student['student_name']
@@ -224,6 +231,51 @@ class CheckUpSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class CheckUpDownSerializer(serializers.ModelSerializer):
+    """체크업 리스트 목록 조회시 사용"""
+
+    class Meta:
+        model = Checkup
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        field_list = [field.name for field in Checkup._meta.get_fields()]
+        data = super().to_representation(instance)
+
+        for field in field_list:
+            if data[field] == None:
+                data[field]=''
+
+        total_data = {}
+        if instance.student_fk:
+            student = StudentDownloadSerializer(instance.student_fk).data
+            school = SchoolDownLoadSerializer(instance.student_fk.school_fk).data
+
+            total_data['school_id'] = school['school_id']
+            total_data['school_name'] = school['school_name']
+            total_data['student_name'] = student['student_name']
+            total_data['grade'] = student['grade']
+            total_data['grade_class'] = student['grade_class']
+            total_data['student_number'] = student['student_number']
+            total_data['medical_insurance_number'] = student['medical_insurance_number']
+            total_data['date_of_birth'] =student['date_of_birth']
+            total_data['gender'] = student['gender']
+            total_data.update(data)
+
+
+        birth_year =datetime.datetime.strptime(total_data['date_of_birth'],"%Y-%m-%d").year
+        cur_year = datetime.datetime.today().year
+        total_data['age'] = cur_year-birth_year+1
+
+        total_data['bmi'] = round(total_data['height'] / (total_data['weight']*total_data['weight']),2)
+
+        total_data.pop('graduate_fk')
+        total_data.pop('checked')
+        total_data.pop('id')
+        total_data.pop('student_fk')
+        return total_data
+
 
 
 class StudentListSerializer(serializers.ModelSerializer):

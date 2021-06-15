@@ -886,7 +886,7 @@ def student_delete_multi(request):
 #         for temp in list:
 #             school = School()
 #             commune = CommuneClinic.objects.get(commune_clinic=temp['commune_clinic'])
-#             school.school_name = data['School name']
+#             school.school_name = temp['School name']
 #             area = Area.objects.get(commune_clinic_fk=commune)
 #
 #             school.area_fk = area
