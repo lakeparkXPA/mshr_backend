@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'admin_api.apps.AdminApiConfig',
+    'mobile_api.apps.MobileApiConfig',
     'rest_framework',
     'rest_framework_simplejwt',
 ]
