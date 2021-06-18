@@ -26,23 +26,30 @@ def edit_items(request):
 
 
     for checkup in request:
-        if Checkup.objects.filter(student_fk=
-                          checkup['student_id']
-                            ,date=datetime.datetime.today().strftime("%Y-%m-%d")).exists():
+        # if Checkup.objects.filter(student_fk=
+        #                   checkup['student_id']
+        #                     ,date=datetime.datetime.today().strftime("%Y-%m-%d")).exists():
 
-            instance = Checkup.objects.filter(student_fk
-                                              =checkup['student_id']
-                                              ,date=datetime.datetime.today().strftime("%Y-%m-%d")).get()
+        if Checkup.objects.select_related('student_fk')\
+            .filter(student_fk__medical_insurance_number=checkup['min']
+                    ,date=datetime.datetime.today().strftime("%Y-%m-%d")).exists():
+
+            # instance = Checkup.objects.filter(student_fk
+            #                                   =checkup['student_id']
+            #                                   ,date=datetime.datetime.today().strftime("%Y-%m-%d")).get()
+            instance = Checkup.objects.select_related('student_fk')\
+                        .filter(student_fk__medical_insurance_number=checkup['min']
+                                ,date=datetime.datetime.today().strftime("%Y-%m-%d")).get()
             print("test")
+
         else:
             instance = Checkup()
             instance.date = datetime.datetime.today().strftime("%Y-%m-%d")
-            instance.student_fk = Student.objects.get(student_id =checkup['student_id'])
+            instance.student_fk = Student.objects.get(medical_insurance_number =checkup['min'])
 
         checkup_serializer = AddCheckUpSerializer(instance=instance,data=checkup,partial=True)
 
         if checkup_serializer.is_valid():
-
             checkup_serializer.save()
 
 
@@ -56,3 +63,27 @@ def edit_item(request):
     """edit one item"""
 
     request = json.loads(request.body)
+
+    if Checkup.objects.select_related('student_fk') \
+            .filter(student_fk__medical_insurance_number=request['min']
+        , date=datetime.datetime.today().strftime("%Y-%m-%d")).exists():
+
+        instance = Checkup.objects.select_related('student_fk') \
+            .filter(student_fk__medical_insurance_number=request['min']
+                    , date=datetime.datetime.today().strftime("%Y-%m-%d")).get()
+        print("test")
+
+    else:
+        instance = Checkup()
+        instance.date = datetime.datetime.today().strftime("%Y-%m-%d")
+        instance.student_fk = Student.objects.get(medical_insurance_number=request['min'])
+
+    checkup_serializer = AddCheckUpSerializer(instance=instance, data=request, partial=True)
+
+    if checkup_serializer.is_valid():
+        checkup_serializer.save()
+
+
+    header = {}
+    header['HTTP_X_CSTATUS'] = 0
+    return Response(headers=header,status=HTTP_201_CREATED)

@@ -79,3 +79,54 @@ class AddCheckUpSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+class GetStudentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = '__all__'
+
+
+    def to_representation(self, instance):
+        field_list = [field.name for field in Student._meta.get_fields()]
+        field_list.remove('student_id')
+        field_list.remove('pic')
+        field_list.remove('school_fk')
+        field_list.remove('checkup')
+        for field in  field_list:
+            print(field)
+        data = super().to_representation(instance)
+        data.pop('student_id')
+        data.pop('pic')
+        data.pop('school_fk')
+
+        for field in field_list:
+            if data[field] ==None:
+                data[field]=''
+
+
+        return data
+
+class GetCheckUpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Checkup
+        fields = '__all__'
+
+
+    def to_representation(self, instance):
+        field_list = [field.name for field in Checkup._meta.get_fields()]
+        field_list.remove('student_fk')
+        field_list.remove('graduate_fk')
+        field_list.remove('id')
+        field_list.remove('checked')
+        data = super().to_representation(instance)
+
+        data.pop('student_fk')
+        data.pop('graduate_fk')
+        data.pop('id')
+        data.pop('checked')
+        for field in field_list:
+            if data[field] ==None:
+                data[field]=''
+
+
+        return data
