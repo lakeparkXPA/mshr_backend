@@ -1,6 +1,6 @@
 from admin_api.models import *
-
-
+import datetime
+from django.utils import timezone
 def log(request, typ, content):
     """
     Log Type : Log Content
@@ -36,6 +36,7 @@ def log(request, typ, content):
     log_insert.user_id = user_id
     log_insert.user_name = user_name
     log_insert.log_type = typ
+    log_insert.log_time = timezone.localtime()
     log_insert.log_content = content
     if ip:
         log_insert.ip = ip
