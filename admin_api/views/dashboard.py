@@ -14,7 +14,7 @@ from django.db import connection
 import json
 
 @api_view(['POST'])
-#@permission_classes([AllAuthenticated])
+@permission_classes([AllAuthenticated])
 def dashboard_info(request):
     """
     대시보드 건강검진 현황 조회 및 차트
@@ -255,7 +255,7 @@ def dashboard_info(request):
 
 
 @api_view(['POST'])
-#@permission_classes([AllAuthenticated])
+@permission_classes([AllAuthenticated])
 def dashboard_filter(request):
     '''
     대시보드 province, district,school 필터링
@@ -386,7 +386,7 @@ def dashboard_filter(request):
 
 
 @api_view(['GET'])
-#@permission_classes([AllAuthenticated])
+@permission_classes([AllAuthenticated])
 def dashboard_notice_list(request):
     """
     공지사항 list 조회 api

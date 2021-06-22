@@ -101,7 +101,7 @@ class Graduate(models.Model):
 class Log(models.Model):
     user_fk = models.ForeignKey('User', models.DO_NOTHING, db_column='user_fk', blank=True, null=True)
     user_id = models.CharField(max_length=50)
-    log_time = models.DateTimeField(blank=True, null=True)
+    log_time = models.DateTimeField()
     log_type = models.CharField(max_length=255, blank=True, null=True)
     log_content = models.CharField(max_length=100, blank=True, null=True)
     ip = models.CharField(max_length=50, blank=True, null=True)

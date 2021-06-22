@@ -139,9 +139,9 @@ def stuList(request):
 def addCheckUp(request):
     """빈 체크업 등록 페이지"""
 
-    request = json.loads(request.body)
+    request_json = json.loads(request.body)
 
-    student_id = request.get('student_id','')
+    student_id = request_json.get('student_id','')
 
     data = {}
     header = {}
@@ -173,9 +173,9 @@ def addCheckUp(request):
 
 
 
-    #log(request,typ='Add Health Check-up',
-     #   content='Insert Health Check-up ' +
-      #          request.META.get('HTTP_USER_ID', ''))
+    log(request,typ='Add Health Check-up',
+       content='Insert Health Check-up ' +
+                request.META.get('HTTP_USER_ID', ''))
     #data['status']=0
     header['HTTP_X_CSTATUS'] = 0
 
@@ -189,9 +189,9 @@ def addCheckUp(request):
 def modiCheckUp(request):
     """체크업 수정 api"""
 
-    request = json.loads(request.body)
+    request_json = json.loads(request.body)
 
-    checkup_data = request.get('info','')
+    checkup_data = request_json.get('info','')
     print(checkup_data)
 
 
@@ -215,9 +215,9 @@ def modiCheckUp(request):
 
 
 
-    #log(request,typ='Update Health Check-up',
-     #   content='Update Health Check-up ' +
-      #          request.META.get('HTTP_USER_ID', ''))
+    log(request,typ='Update Health Check-up',
+        content='Update Health Check-up ' +
+                request.META.get('HTTP_USER_ID', ''))
 
     #data['status'] = 0
 
@@ -291,9 +291,9 @@ def delCheckUp(request,checkup_id):
         header['HTTP_X_CSTATUS'] = 1
         return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-    #log(request,typ='Delete Health Check-up',
-     #   content='Delete Health Check-up ' +
-      #          request.META.get('HTTP_USER_ID', ''))
+    log(request,typ='Delete Health Check-up',
+        content='Delete Health Check-up ' +
+                request.META.get('HTTP_USER_ID', ''))
 
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_200_OK)
@@ -303,8 +303,8 @@ def delCheckUp(request,checkup_id):
 def delChekUpMulti(request):
     """체크업 다중 삭제 Api"""
 
-    request = json.loads(request.body)
-    checkup_list = request['checkup_list']
+    request_json = json.loads(request.body)
+    checkup_list = request_json['checkup_list']
 
 
     header = {}
@@ -319,32 +319,12 @@ def delChekUpMulti(request):
         header['HTTP_X_CSTATUS'] = 1
         return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
+    log(request,typ='Delete Health Check-up',
+        content='Delete Health Check-up ' +
+                request.META.get('HTTP_USER_ID', ''))
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_200_OK)
 
-@api_view(['POST'])
-@permission_classes([AllAuthenticated])
-def delChekUpMulti(request):
-    """체크업 다중 삭제 Api"""
-
-    request = json.loads(request.body)
-    checkup_list = request['checkup_list']
-
-
-    header = {}
-
-    try:
-        with transaction.atomic():
-            for checkup in checkup_list:
-                checkup_obj = Checkup.objects.get(id=checkup)
-                checkup_obj.delete()
-    except:
-
-        header['HTTP_X_CSTATUS'] = 1
-        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
-
-    header['HTTP_X_CSTATUS'] = 0
-    return Response(headers=header,status=HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -352,15 +332,15 @@ def delChekUpMulti(request):
 def CheckUpDownList(request):
 
     """체크업 리스트 다운로드 API"""
-    request = json.loads(request.body)
+    request_json = json.loads(request.body)
 
 
-    school_id = request.get('school_id','')
-    start_date = request.get('start_date','')
-    end_date = request.get('end_date','')
-    checked = request.get('checked','')
-    grade = request.get('grade','')
-    name = request.get('name','')
+    school_id = request_json.get('school_id','')
+    start_date = request_json.get('start_date','')
+    end_date = request_json.get('end_date','')
+    checked = request_json.get('checked','')
+    grade = request_json.get('grade','')
+    name = request_json.get('name','')
 
     data = {}
     header = {}
@@ -450,6 +430,10 @@ def CheckUpDownList(request):
 
 
     wb.save(response)
+
+    log(request,typ='Download Health Check-up',
+        content='Download Health Check-up file' )
+
 
     return response
 

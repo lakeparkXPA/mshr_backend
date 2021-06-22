@@ -316,3 +316,18 @@ class AddStudentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = '__all__'
+
+
+class FileUploadSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = NoticeFile
+        fields = '__all__'
+
+    def update(self, instance, validated_data):
+        instance.notice_fk = validated_data.get('notice_fk', instance.notice_fk)
+        instance.file_name = validated_data.get('file_name', instance.file_name)
+
+        instance.save()
+
+        return instance

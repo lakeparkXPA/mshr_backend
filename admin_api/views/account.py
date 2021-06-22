@@ -113,12 +113,12 @@ def refresh_token(request):
 def login(request):
 
     '''
-    Login Api
+    Login Api (http user id header 필요)
     '''
     #pw = request.POST.get('password','')
-    request = json.loads(request.body)
+    request_json = json.loads(request.body)
 
-    pw = request.get('password','')
+    pw = request_json.get('password','')
 
     data = {}
     header = {}
@@ -131,7 +131,7 @@ def login(request):
 
 
     try:
-        obj = User.objects.get(user_id=request['user_id'])
+        obj = User.objects.get(user_id=request_json['user_id'])
     except:
         #data['status']=2
         print("user id error")
@@ -141,9 +141,9 @@ def login(request):
 
     user = LoginSerializer(obj).data
     try:
-        #if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
+        if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
         #if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:
-        if True:
+        #if True:
             payload = {}
             payload['auth'] = 'access'
 
@@ -171,7 +171,7 @@ def login(request):
             obj.token = refresh_token.decode()
             obj.save()
 
-            # log(request,typ='Log in', content='Login success')
+            log(request,typ='Log in', content='Login success')
             header['HTTP_X_CSTATUS'] = 0
             return Response(data, headers=header,status=HTTP_200_OK)
 
@@ -183,13 +183,93 @@ def login(request):
             return Response(data,headers=header,status=HTTP_200_OK)
 
     except Exception as e:
-        data['status'] = 4
+        #data['status'] = 4
         print(str(e))
         header['HTTP_X_CSTATUS']=4
-        return Response(data,headers=header,status=HTTP_400_BAD_REQUEST)
+        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
 
+@api_view(['GET'])
+@permission_classes((AllAuthenticated))
+def account_detail(request):
+    try:
+        user_id = request.GET.get('user_id')
+        if not user_id:
+            raise ValueError(1)
 
+        user = User.objects.filter(user_id__exact=user_id)
+
+        user_replace = user.extra(select={'user_mobile': "coalesce(user_mobile, '')",
+                                          'email_address': "coalesce(user.email_address, '')"})
+
+        user_select = user_replace.values('user_id', 'user_name', 'user_tel', 'user_mobile', 'email_address')
+
+        res = Response(user_select, status=HTTP_200_OK)
+        res['HTTP_X_CSTATUS'] = 0
+        return res
+
+    except Exception as e:
+        res = Response(status=HTTP_400_BAD_REQUEST)
+        res['HTTP_X_CSTATUS'] = int(str(e))
+        return res
+
+
+@api_view(['POST'])
+@permission_classes((AllAuthenticated))
+def account_edit(request):
+    user_id = request.POST.get('user_id')
+    user_name = request.POST.get('user_name')
+    user_tel = request.POST.get('user_tel')
+    user_mobile = request.POST.get('user_mobile')
+    email_address = request.POST.get('email_address')
+
+    user_pk = User.objects.get(user_id__exact=user_id).id
+
+    account = User.objects.get(id=user_pk)
+    account.user_name = user_name
+    account.user_tel = user_tel
+    if user_mobile:
+        account.user_mobile = user_mobile
+    if email_address:
+        account.email_address = email_address
+
+    account.save()
+    # TODO---- Enable block later
+    # log(request, typ='Add school', content='Update user ' + user_id)
+
+    res = Response(status=HTTP_200_OK)
+    res['HTTP_X_CSTATUS'] = 0
+    return res
+
+
+
+@api_view(['POST'])
+@permission_classes((AllAuthenticated))
+def account_pw(request):
+    try:
+        user_id = request.POST.get('user_id')
+        pw_old = request.POST.get('pw_old')
+        pw_new = request.POST.get('pw_new')
+
+        pw_db = User.objects.get(user_id__exact=user_id).password
+
+        pw_check = bcrypt.checkpw(pw_old.encode('utf-8'), pw_db)
+
+        if not pw_check:
+            raise ValueError(2)
+
+        user_pw = User.objects.get(user_id__exact=user_id)
+        user_pw.password = bcrypt.hashpw(pw_new.encode('utf-8'), bcrypt.gensalt(5)).decode('utf-8')
+        user_pw.save()
+
+        res = Response(status=HTTP_200_OK)
+        res['HTTP_X_CSTATUS'] = 0
+        return res
+
+    except Exception as e:
+        res = Response(status=HTTP_400_BAD_REQUEST)
+        res['HTTP_X_CSTATUS'] = int(str(e))
+        return res
 
 

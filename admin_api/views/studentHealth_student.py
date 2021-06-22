@@ -187,12 +187,12 @@ def student_listDownload(request):
 
     """학생 리스트 다운로드 """
 
-    request = json.loads(request.body)
+    request_json = json.loads(request.body)
 
-    user_id = request.get('user_id','')
-    school_id = request.get('school_id','')
-    grade = request.get('grade','')
-    name_id = request.get('name_id','')
+    user_id = request_json.get('user_id','')
+    school_id = request_json.get('school_id','')
+    grade = request_json.get('grade','')
+    name_id = request_json.get('name_id','')
 
 
     q = Q()
@@ -373,6 +373,9 @@ def student_listDownload(request):
 
     wb.save(response)
 
+    log(request,typ='Download Student List',
+        content='Download Student List file' )
+
     return response
 
 
@@ -461,7 +464,7 @@ def school_list(request):
     return Response(data, headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
-#@permission_classes([AllAuthenticated])
+@permission_classes([AllAuthenticated])
 def student_add(request):
     """학생 등록 api"""
 
@@ -502,9 +505,9 @@ def student_add(request):
         return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
-    #log(request,typ='Add Student',
-        #content='Insert Student ' +
-               # request.META.get('HTTP_USER_ID',''))
+    log(request,typ='Add Student',
+        content='Insert Student ' +
+                request.META.get('HTTP_USER_ID',''))
     #data['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_201_CREATED)
@@ -519,8 +522,7 @@ def student_get(request,student_id):
 
     """학생 수정시 학생 정보 로딩 api"""
 
-    print(student_id)
-    #print(student_id)
+
     data = {}
     header = {}
 
@@ -604,6 +606,7 @@ def min_check(request):
 @api_view(['PUT'])
 @permission_classes([AllAuthenticated])
 def student_modify(request):
+
     """학생 정보 수정시 사용 api"""
 
 
@@ -649,9 +652,9 @@ def student_modify(request):
 
 
 
-    #log(request,typ='Update Student',
-        #content='Update Student ' +
-               # request.META.get('HTTP_USER_ID',''))
+    log(request,typ='Update Student',
+        content='Update Student ' +
+                request.META.get('HTTP_USER_ID',''))
 
 
     header['HTTP_X_CSTATUS'] = 0
@@ -726,9 +729,9 @@ def student_delete(request,student_id):
 
 
 
-    #log(request,typ='Delete Student',
-        #content='Delete Student ' +
-               # request.META.get('HTTP_USER_ID',''))
+    log(request,typ='Delete Student',
+        content='Delete Student ' +
+                request.META.get('HTTP_USER_ID',''))
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_200_OK)
 
@@ -737,11 +740,11 @@ def student_delete(request,student_id):
 def student_delete_multi(request):
 
     """학생 정보 일괄 삭제 api"""
-    request = json.loads(request.body)
+    request_json = json.loads(request.body)
 
     student_obj_list = Student.objects.\
                         prefetch_related('checkup_set').\
-                        filter(student_id__in=request['student_list'])
+                        filter(student_id__in=request_json['student_list'])
 
     data = {}
     header = {}
@@ -784,9 +787,9 @@ def student_delete_multi(request):
 
 
 
-    #log(request,typ='Delete Student',
-        #content='Delete Student ' +
-               # request.META.get('HTTP_USER_ID',''))
+    log(request,typ='Delete Student',
+        content='Delete Student ' +
+                request.META.get('HTTP_USER_ID',''))
     #data['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_200_OK)
@@ -899,7 +902,7 @@ def student_delete_multi(request):
 
 
 @api_view(['POST'])
-#@permission_classes([AllAuthenticated])
+@permission_classes([AllAuthenticated])
 def student_addAll(request):
 
     """학생 일괄 등록 excel 파일 파싱 후 저장"""
@@ -982,8 +985,8 @@ def student_addAll(request):
     #     Student.objects.bulk_create(bulk_list)
 
 
-    #log(request,typ='Upload Student',
-        #content='Upload Student file')
+    log(request,typ='Upload Student',
+        content='Upload Student file')
 
     res['status'] = 0
     header['HTTP_X_CSTATUS'] = 0

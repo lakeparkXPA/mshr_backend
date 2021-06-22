@@ -19,9 +19,10 @@ def log(request, typ, content):
     """
 
     user_id = request.META.get('HTTP_USER_ID', '')
-    user = User.objects.filter(user_id__=user_id)
+    user = User.objects.filter(user_id=user_id)
     user_fk = user.values_list('id', flat=True)[0]
     user_name = user.values_list('user_name', flat=True)[0]
+
 
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -29,8 +30,9 @@ def log(request, typ, content):
     else:
         ip = request.META.get('REMOTE_ADDR')
 
+
     log_insert = Log()
-    log_insert.user_fk = user_fk
+    log_insert.user_fk = user[0]
     log_insert.user_id = user_id
     log_insert.user_name = user_name
     log_insert.log_type = typ
