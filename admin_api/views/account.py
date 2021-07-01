@@ -167,7 +167,7 @@ def login(request):
 
             data['access_token'] = access_token
             data['refresh_token'] = refresh_token
-
+            data['user_level'] = user['user_level']
             obj.token = refresh_token.decode()
             obj.save()
 
@@ -191,7 +191,7 @@ def login(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllAuthenticated))
+@permission_classes((AllAuthenticated,))
 def account_detail(request):
     try:
         user_id = request.GET.get('user_id')
@@ -216,7 +216,7 @@ def account_detail(request):
 
 
 @api_view(['POST'])
-@permission_classes((AllAuthenticated))
+@permission_classes((AllAuthenticated,))
 def account_edit(request):
     user_id = request.POST.get('user_id')
     user_name = request.POST.get('user_name')
@@ -245,7 +245,7 @@ def account_edit(request):
 
 
 @api_view(['POST'])
-@permission_classes((AllAuthenticated))
+@permission_classes((AllAuthenticated,))
 def account_pw(request):
     try:
         user_id = request.POST.get('user_id')

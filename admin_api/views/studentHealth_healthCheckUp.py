@@ -54,7 +54,8 @@ def list(request):
     if grade and grade != 0:
         q.add(Q(student_fk__grade=grade),q.AND)
 
-    if checked:
+    #
+    if checked ==1 or checked ==0:
         q.add(Q(checked=checked),Q.AND)
 
     if name:
@@ -77,10 +78,9 @@ def list(request):
 
     checkup_serializer = CheckUpSerializer(checkup,many=True)
 
-
     data['checkUpList'] = checkup_serializer.data
 
-    print(connection.queries)
+
     #print(checkup)
     #data['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
@@ -362,7 +362,7 @@ def CheckUpDownList(request):
     if grade and grade != 0:
         q.add(Q(student_fk__grade=grade),q.AND)
 
-    if checked:
+    if checked == 0 or checked == 1:
         q.add(Q(checked=checked),Q.AND)
 
     if name:

@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework import permissions
 from admin_api.permissions import *
-
+import datetime
 @api_view(['POST'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def log_lst(request):
     try:
         try:
@@ -32,6 +32,8 @@ def log_lst(request):
         else:
             raise PermissionError(2)
 
+
+
         if search:
             log_filter = logs.filter(Q(user_id__contains=search) |
                                      Q(user_name__contains=search) |
@@ -40,6 +42,9 @@ def log_lst(request):
                                      Q(ip__contains=search))
         else:
             log_filter = logs
+
+        for log in log_filter:
+            log['log_time'] = log['log_time'].strftime('%Y-%m-%d %H:%M:%S')
 
         res = Response(log_filter, status=HTTP_200_OK)
         res['HTTP_X_CSTATUS'] = 0

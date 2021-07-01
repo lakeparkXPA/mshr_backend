@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['13.125.225.181']
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,7 +43,6 @@ INSTALLED_APPS = [
     'mobile_api.apps.MobileApiConfig',
     'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -56,6 +56,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -63,10 +64,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
+
+
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -77,7 +81,7 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-    'user_id',
+    'user-id',
 ]
 CORS_EXPOSE_HEADERS = [
     'HTTP_X_CSTATUS',

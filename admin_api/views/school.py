@@ -7,7 +7,7 @@ from rest_framework import permissions
 from admin_api.permissions import *
 
 @api_view(['POST'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def school_lst(request):
     try:
         try:
@@ -58,7 +58,7 @@ def school_lst(request):
 
 
 @api_view(['GET'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def school_check(request):
     school_id = request.GET.get('school_id', '')
 
@@ -80,7 +80,7 @@ def school_check(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def school_add(request):
     area_id = Area.objects.select_related('province_fk').select_related('district_fk'). \
         select_related('commune_clinic_fk').filter(
@@ -119,7 +119,7 @@ def school_add(request):
 
 
 @api_view(['GET'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def school_detail(request):
     school_id = request.GET.get('school_id')
     schools = School.objects.filter(school_id__exact=school_id).select_related('area_fk')
@@ -150,7 +150,7 @@ def school_detail(request):
 
 
 @api_view(['PUT'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def school_edit(request):
     area_id = Area.objects.select_related('province_fk').select_related('district_fk'). \
         select_related('commune_clinic_fk').filter(
@@ -189,7 +189,7 @@ def school_edit(request):
 
 
 @api_view(['DELETE', 'GET'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def school_remove(request, pk):
 
     try:

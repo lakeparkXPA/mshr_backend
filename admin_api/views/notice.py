@@ -5,16 +5,19 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework import permissions, generics
 from django.http import FileResponse
-from admin_api.permissions import *
 
+from admin_api.package.log import log
+from admin_api.permissions import *
+from admin_api.serializers import *
 
 from admin_api.serializers import FileUploadSerializer
 import requests, shutil, os
 
-
+# (IsMaster,IsProvince,IsDistrict,)
 @api_view(['POST'])
-@permission_classes((IsMaster,IsProvince,IsDistrict))
+@permission_classes((OverDistrict,))
 def notice_lst(request):
+
     try:
         try:
             user_id = request.data['user_id']
@@ -43,7 +46,13 @@ def notice_lst(request):
         else:
             notice = notice_filter.exclude(notice_id=True)
 
-        res = Response(notice, status=HTTP_200_OK)
+        #print(notice)
+        #print(notice[0])
+        notice_data = NoticeGetSerializer(notice,many=True).data
+
+
+
+        res = Response(notice_data, status=HTTP_200_OK)
         res['HTTP_X_CSTATUS'] = 0
         return res
 
@@ -55,7 +64,7 @@ def notice_lst(request):
 
 
 
-@permission_classes((IsMaster,IsProvince,IsDistrict))
+@permission_classes((OverDistrict,))
 class NoticeFileUpload(generics.CreateAPIView):
     queryset = NoticeFile.objects.all()
     serializer_class = FileUploadSerializer
@@ -86,7 +95,7 @@ class NoticeFileUpload(generics.CreateAPIView):
 
 
 @api_view(['POST'])
-@permission_classes((IsMaster,IsProvince))
+@permission_classes((OverProvince,))
 def notice_add(request):
     user_id = request.META.get('HTTP_USER_ID', '')
     user_fk = User.objects.filter(user_id__exact=user_id).first()
@@ -114,7 +123,7 @@ def notice_add(request):
         except:
             pass
     # TODO---- Enable block later
-    # log(request, typ='Add school', content='Insert school ' + school_id)
+    log(request, typ='Add school', content='Insert school ' + school_id)
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0
@@ -123,7 +132,7 @@ def notice_add(request):
 
 
 @api_view(['GET'])
-@permission_classes((IsMaster,IsProvince,IsDistrict))
+@permission_classes((OverDistrict,))
 def notice_detail(request):
     try:
         notice_id = request.GET.get('notice_id')
@@ -146,7 +155,7 @@ def notice_detail(request):
 
 
 @api_view(['GET'])
-@permission_classes((IsMaster,IsProvince,IsDistrict))
+@permission_classes((OverDistrict,))
 def notice_file(request):
     try:
         notice_id = request.GET.get('notice_id')
@@ -167,7 +176,7 @@ def notice_file(request):
 
 
 @api_view(['PUT'])
-@permission_classes((IsMaster,IsProvince,IsDistrict))
+@permission_classes((OverDistrict,))
 def notice_edit(request):
     try:
         user_id = request.META.get('HTTP_USER_ID', '')
@@ -214,7 +223,7 @@ def notice_edit(request):
 
 
 @api_view(['DELETE', 'GET'])
-@permission_classes((IsMaster,IsProvince,IsDistrict))
+@permission_classes((OverDistrict,))
 def notice_remove(request, pk):
     try:
         try:

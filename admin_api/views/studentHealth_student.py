@@ -30,13 +30,14 @@ def student_list(request):
     user_id = request.get('user_id','')
     school_id = request.get('school_id','')
     grade = request.get('grade','')
-    name_id = request.get('name_id','')
+    name_id = request.get('name','')
 
     header = {}
 
     q = Q()
     data = {}
     """필터링 조건으로 조회할 경우"""
+    student_list = []
     if school_id or grade or name_id:
 
         if school_id:
@@ -58,9 +59,11 @@ def student_list(request):
 
             #raise exceptions.ValidationError(data)
 
-        student_serializer = StudentSerializer(students_obj,many=True)
+        student_serializer = StudentSerializer(students_obj,many=True).data
 
-        student_list = student_serializer.data
+        #student_list = []
+        for student_data in student_serializer:
+            student_list.append(student_data)
         data['students'] = student_list
 
 
@@ -81,32 +84,32 @@ def student_list(request):
 
                     """유저가 마스터 계정일경우"""
                     students_obj = Student.objects.all()
-                    student_list = []
+                    #student_list = []
                     student_serializer = StudentSerializer(students_obj,many=True).data
-                    student_list.append(student_serializer)
+                    #print(student_serializer)
+                    for student_data in student_serializer:
+                        student_list.append(student_data)
+
 
                     data['students']=student_list
-
-
 
 
                 elif user['user_level']==1:
 
                     """유저가 province계정 인 경우"""
 
-
-
                     area_list = Area.objects.prefetch_related('school_set').\
                                     prefetch_related('school_set__student_set').\
                                     filter(province_fk=user['area_fk__province_fk'])
 
 
-                    student_list = []
-
+                    #student_list = []
                     for area in area_list:
                         for school in area.school_set.all():
                             student_serializer = StudentSerializer(school.student_set.all(),many=True).data
-                            student_list.append(student_serializer)
+                            for student_data in student_serializer:
+                                student_list.append(student_data)
+
 
                     data['students'] = student_list
 
@@ -119,12 +122,12 @@ def student_list(request):
                                     filter(province_fk=user['area_fk__province_fk'],
                                             district_fk=user['area_fk__district_fk'])
 
-                    student_list = []
-
+                    #student_list = []
                     for area in area_list:
                         for school in area.school_set.all():
                             student_serializer = StudentSerializer(school.student_set.all(),many=True).data
-                            student_list.append(student_serializer)
+                            for student_data in student_serializer:
+                                student_list.append(student_data)
 
                     data['students'] = student_list
 
@@ -140,12 +143,12 @@ def student_list(request):
                                             district_fk=user['area_fk__district_fk'],
                                             commune_clinic_fk=user['area_fk__commune_clinic_fk'])
 
-                    student_list = []
-
+                    #student_list = []
                     for area in area_list:
                         for school in area.school_set.all():
                             student_serializer = StudentSerializer(school.student_set.all(),many=True).data
-                            student_list.append(student_serializer)
+                            for student_data in student_serializer:
+                                student_list.append(student_data)
 
                     data['students'] = student_list
 
@@ -157,10 +160,14 @@ def student_list(request):
                                     filter(school_fk=user['school_fk'])
 
 
-                    student_list = []
+                    #student_list = []
+
                     student_serializer = StudentSerializer(student.all(),many=True).data
 
-                    student_list.append(student_serializer)
+                    for student_data in student_serializer:
+                        student_list.append(student_data)
+
+
                     data['students'] = student_list
 
 
@@ -179,7 +186,7 @@ def student_list(request):
 
     #data['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
-    return Response(data,headers=header,status=HTTP_200_OK)
+    return Response(student_list,headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
@@ -192,7 +199,7 @@ def student_listDownload(request):
     user_id = request_json.get('user_id','')
     school_id = request_json.get('school_id','')
     grade = request_json.get('grade','')
-    name_id = request_json.get('name_id','')
+    name_id = request_json.get('name','')
 
 
     q = Q()
@@ -468,7 +475,23 @@ def school_list(request):
 def student_add(request):
     """학생 등록 api"""
 
-    student_data = request.POST.get('info','')
+    student_data = {}
+
+    student_data['school_fk'] = request.POST.get('school_fk','')
+    student_data['student_name'] = request.POST.get('student_name', '')
+    student_data['grade'] = request.POST.get('grade', '')
+    student_data['grade_class'] = request.POST.get('grade_class', '')
+    student_data['student_number'] = request.POST.get('student_number', '')
+    student_data['village'] = request.POST.get('village', '')
+    student_data['gender'] = request.POST.get('gender', '')
+    student_data['date_of_birth'] = request.POST.get('date_of_birth', '')
+    student_data['medical_insurance_number'] = request.POST.get('medical_insurance_number', '')
+    student_data['contact'] = request.POST.get('contact', '')
+    student_data['parents_name'] = request.POST.get('parents_name', '')
+
+    print(student_data)
+
+    #student_data = request.POST.get('info','')
     #student_data = json.loads(request.body)
     #print(student_data)
     #print(student_data)
@@ -501,6 +524,7 @@ def student_add(request):
     else:
         #data['status'] = 2
         header['HTTP_X_CSTATUS'] = 2
+        print(student_obj.errors)
         print("Student Enrollment Failed")
         return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 

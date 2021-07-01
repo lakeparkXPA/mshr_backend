@@ -7,8 +7,10 @@ from rest_framework import permissions
 from admin_api.permissions import *
 
 @api_view(['GET'])
-@permission_classes((AllAuthenticated))
+@permission_classes((AllAuthenticated,))
 def area_name(request):
+    print("area 호출")
+
     province = request.GET.get('province', '')
     district = request.GET.get('district', '')
     commune_clinic = request.GET.get('commune_clinic', '')

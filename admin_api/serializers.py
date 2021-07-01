@@ -331,3 +331,30 @@ class FileUploadSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class NoticeGetSerializer(serializers.ModelSerializer):
+    """notice list 조회시 사용"""
+    class Meta:
+        model = Notice
+        fields = ['notice_id','title','create_time','user_name']
+
+    def to_representation(self, instance):
+        field_list = ['notice_id', 'title', 'create_time', 'user_name']
+
+        data = super().to_representation(instance)
+
+        for field in field_list:
+            if field == 'create_time':
+                if data[field] !=None:
+                    timeList = data[field].split("T")
+                    data[field] = timeList[0] + ' '+ timeList[1]
+                    data[field] = data[field][0:19]
+                else:
+                    data[field]=''
+            elif data[field] == None:
+                data[field]=''
+
+
+
+        return data

@@ -19,10 +19,10 @@ def dashboard_info(request):
     """
     대시보드 건강검진 현황 조회 및 차트
     """
-
+    print("대시보드 info method 테스트")
     request = json.loads(request.body)
     header = {}
-
+    print(request)
     user_id = request.get('user_id','')
     province = request.get('province','')
     district = request.get('district','')
@@ -130,7 +130,7 @@ def dashboard_info(request):
 
 
     """average weight"""
-
+    print("weight test 시작")
     weight = {}
     temp = {}
 
@@ -170,6 +170,7 @@ def dashboard_info(request):
         if temp["grade_{}".format(i)]["female"]["count"] !=0:
             weight["grade_{}".format(i)]["female"]= (temp["grade_{}".format(i)]["female"]["total"]) / (temp["grade_{}".format(i)]["female"]["count"])
 
+    print("weight")
     print(weight)
     data['average_weight'] = weight
 
@@ -212,6 +213,7 @@ def dashboard_info(request):
             height["grade_{}".format(i)]["female"] = (temp["grade_{}".format(i)]["female"]["total"]) / (
             temp["grade_{}".format(i)]["female"]["count"])
 
+    print("height")
     print(height)
     data['average_height'] = height
     #print(connection.queries)
@@ -247,9 +249,13 @@ def dashboard_info(request):
 
     data["grade_hc_items"] = grade_hc_items
 
+    print("grade_hc_items")
+    print(grade_hc_items)
     #data['status'] = 0
 
     header['HTTP_X_CSTATUS'] = 0
+
+    #print(data)
     return Response(data,headers=header,status=HTTP_200_OK)
 
 
@@ -260,6 +266,8 @@ def dashboard_filter(request):
     '''
     대시보드 province, district,school 필터링
     '''
+
+    print("대시보드 filter method 테스트")
 
     request = json.loads(request.body)
     header = {}
@@ -391,7 +399,7 @@ def dashboard_notice_list(request):
     """
     공지사항 list 조회 api
     """
-
+    print("대시보드 공지사항조회 method 테스트")
     header = {}
     try:
         notice_list_obj = Notice.objects.all()
@@ -420,6 +428,8 @@ def dashboard_notice(request,notice_id):
     """
     공지사항 상세조회 api
     """
+
+    print("대시보드 공지사항 상세조회 method 테스트")
     header = {}
     try:
 
@@ -453,7 +463,7 @@ def dashboard_notice_img(request,notice_id):
     """
     공지사항 파일 다운로드 API
     """
-
+    print("대시보드 공지사항 파일 다운로드 method 테스트")
     notice_file = NoticeFile.objects.get(notice_fk=notice_id).file_name
     if notice_file is None:
         return Response()

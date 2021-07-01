@@ -18,6 +18,7 @@ class AllAuthenticated(permissions.BasePermission):
     """모든 권한 존재하는 계정 """
 
     def has_permission(self, request, view):
+
         if request.META.get('HTTP_AUTHORIZATION') is None:
             return False
         else:
@@ -43,7 +44,6 @@ class IsMaster(permissions.BasePermission):
     """Master 계정 권한 부여"""
 
     def has_permission(self, request, view):
-
         if request.META.get('HTTP_AUTHORIZATION') is None:
             return False
         else:
@@ -61,7 +61,7 @@ class IsMaster(permissions.BasePermission):
 
         return False
 
-class IsProvince(permissions.BasePermission):
+class OverProvince(permissions.BasePermission):
 
     """Province 계정 권한 부여"""
 
@@ -79,13 +79,13 @@ class IsProvince(permissions.BasePermission):
                 raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
 
             elif len(auth) ==2:
-                if permission_check(user_id,1) and tokenverify(auth[1]):
+                if permission_check(user_id,0,1) and tokenverify(auth[1]):
                     return True
 
         return False
 
 
-class IsDistrict(permissions.BasePermission):
+class OverDistrict(permissions.BasePermission):
 
     """District 계정 권한 부여"""
 
@@ -103,13 +103,13 @@ class IsDistrict(permissions.BasePermission):
                 raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
 
             elif len(auth) ==2:
-                if permission_check(user_id,2) and tokenverify(auth[1]):
+                if permission_check(user_id,0,1,2) and tokenverify(auth[1]):
                     return True
 
         return False
 
 
-class IsCommune(permissions.BasePermission):
+class OverCommune(permissions.BasePermission):
 
     """Commune 계정 권한 부여"""
 
@@ -127,13 +127,13 @@ class IsCommune(permissions.BasePermission):
                 raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
 
             elif len(auth) ==2:
-                if permission_check(user_id,3) and tokenverify(auth[1]):
+                if permission_check(user_id,0,1,2,3) and tokenverify(auth[1]):
                     return True
 
         return False
 
 
-class IsSchool(permissions.BasePermission):
+class OverSchool(permissions.BasePermission):
 
     """School 계정 권한 부여"""
 
@@ -151,7 +151,7 @@ class IsSchool(permissions.BasePermission):
                 raise exceptions.AuthenticationFailed('Invalid Authorization header. No credentials provided.')
 
             elif len(auth) ==2:
-                if permission_check(user_id,4) and tokenverify(auth[1]):
+                if permission_check(user_id,0,1,2,3,4) and tokenverify(auth[1]):
                     return True
 
         return False
@@ -163,7 +163,6 @@ def permission_check(user_id,*level):
 
     try:
         user_level = User.objects.get(user_id=user_id).user_level
-
 
         if user_level in level:
             return True

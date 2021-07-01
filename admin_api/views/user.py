@@ -24,9 +24,9 @@ level_dic = {
 
 
 @api_view(['POST'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def user_lst(request):
-
+    print("user list 호출")
     try:
         try:
             user_id = request.data['user_id']
@@ -35,7 +35,7 @@ def user_lst(request):
             raise ValueError(1)
 
         search = request.data['search']
-
+        print("서치: " + search)
 
 
 
@@ -78,7 +78,7 @@ def user_lst(request):
 
 
 @api_view(['GET'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def user_check(request):
     user_id = request.GET.get('user_id', '')
 
@@ -99,7 +99,7 @@ def user_check(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def user_add(request):
     province = request.data['province']
     district = request.data['district']
@@ -122,7 +122,13 @@ def user_add(request):
         user_insert.user_mobile = request.data['user_mobile']
 
     if user_level == 0:
-        pass
+        area_id = Area.objects.filter(
+            Q(province_fk__isnull= True) &
+            Q(district_fk__isnull= True) &
+            Q(commune_clinic_fk__isnull= True)
+        ).first()
+
+        user_insert.area_fk = area_id
 
     elif user_level == 1:
         area_id = Area.objects.filter(
@@ -169,7 +175,7 @@ def user_add(request):
 
 
 @api_view(['GET'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def reset_pw(request):
     user_id = request.GET.get('user_id')
     try:
@@ -232,7 +238,7 @@ def user_detail(request):
 
 
 @api_view(['PUT'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def user_edit(request):
     user_id = request.data['user_id']
     province = request.data['province']
@@ -306,7 +312,7 @@ def user_edit(request):
 
 
 @api_view(['DELETE', 'GET'])
-@permission_classes((IsMaster))
+@permission_classes((IsMaster,))
 def user_remove(request, pk):
     try:
         user_pk = User.objects.get(user_id__exact=pk).id
