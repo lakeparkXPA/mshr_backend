@@ -64,11 +64,10 @@ def notice_lst(request):
 
 
 
-@permission_classes((OverDistrict,))
+#@permission_classes((OverDistrict,))
 class NoticeFileUpload(generics.CreateAPIView):
     queryset = NoticeFile.objects.all()
     serializer_class = FileUploadSerializer
-
     def create(self, request, *args, **kwargs):
         try:
             notice_pk = request.POST.get('notice_fk')
@@ -110,6 +109,7 @@ def notice_add(request):
     notice.field = contents
 
     notice.save()
+
     if request.FILES.getlist('attachments'):
         notice_return = {'notice_fk': notice.notice_id, 'req_type': 'add'}
         notice_data = {'attachments': request.FILES.get('attachments')}
@@ -117,13 +117,12 @@ def notice_add(request):
         response = requests.post('http://127.0.0.1:8000/admin_api/management/notice/upload/',
                                  files=notice_data, data=notice_return)
         try:
-            res = Response(status=HTTP_400_BAD_REQUEST)
+            res = Response(status=HTTP_200_OK)
             res['HTTP_X_CSTATUS'] = response.headers['HTTP_X_CSTATUS']
             return res
         except:
             pass
-    # TODO---- Enable block later
-    log(request, typ='Add school', content='Insert school ' + school_id)
+    log(request, typ='Add Notice', content='Insert Notice ' + user_id)
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0

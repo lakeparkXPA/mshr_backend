@@ -76,11 +76,11 @@ def list(request):
 
 
 
-    checkup_serializer = CheckUpSerializer(checkup,many=True)
+    checkup_serializer = CheckUpListSerializer(checkup,many=True)
 
-    data['checkUpList'] = checkup_serializer.data
+    data= checkup_serializer.data
 
-
+    print(data)
     #print(checkup)
     #data['status'] = 0
     header['HTTP_X_CSTATUS'] = 0

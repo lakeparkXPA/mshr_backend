@@ -232,6 +232,45 @@ class CheckUpSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class CheckUpListSerializer(serializers.ModelSerializer):
+    """체크업 리스트 목록 조회시 사용"""
+
+    class Meta:
+        model = Checkup
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        field_list = [field.name for field in Checkup._meta.get_fields()]
+        data = super().to_representation(instance)
+
+        for field in field_list:
+            if data[field] == None:
+                data[field]=''
+
+        if instance.student_fk:
+            student = StudentSerializer(instance.student_fk).data
+
+            data['school_id'] = instance.student_fk.school_fk.school_id
+            data['medical_insurance_number'] = student['medical_insurance_number']
+            data['student_name'] = student['student_name']
+            data['grade'] = student['grade']
+            data['dob'] = student['date_of_birth']
+            data['grade_class'] = student['grade_class']
+            data['gender'] = student['gender']
+            birth_year = datetime.datetime.strptime(student['date_of_birth'], "%Y-%m-%d").year
+            cur_year = datetime.datetime.today().year
+            data['age'] = cur_year - birth_year + 1
+
+            height_m = data['height'] / 100
+            data['bmi'] = round(data['weight'] / (height_m ** 2), 2)
+            data['hc_year'] = data['date'][0:4]
+
+        data.pop('graduate_fk')
+        data.pop('checked')
+        return data
+
+        return instance
+
 class CheckUpDownSerializer(serializers.ModelSerializer):
     """체크업 리스트 목록 조회시 사용"""
 
@@ -267,8 +306,8 @@ class CheckUpDownSerializer(serializers.ModelSerializer):
         birth_year =datetime.datetime.strptime(total_data['date_of_birth'],"%Y-%m-%d").year
         cur_year = datetime.datetime.today().year
         total_data['age'] = cur_year-birth_year+1
-
-        total_data['bmi'] = round(total_data['height'] / (total_data['weight']*total_data['weight']),2)
+        height_m = total_data['height']/100
+        total_data['bmi'] = round(total_data['weight'] / (height_m**2),2)
 
         total_data.pop('graduate_fk')
         total_data.pop('checked')

@@ -281,7 +281,7 @@ def dashboard_filter(request):
     data = {}
 
     try:
-        user_level = User.objects.get(user_id = request.POST.get('user_id')).user_level
+        user_level = User.objects.get(user_id = request.get('user_id')).user_level
         print(user_level)
 
     except Exception as e:
@@ -296,7 +296,7 @@ def dashboard_filter(request):
     if filter == 'province' and (user_level is 0):
 
         """Province 검색 할 경우"""
-
+        print("filter테스트")
         try:
             province_list = Province.objects.all().values('province')
             data['province'] = []
@@ -306,7 +306,7 @@ def dashboard_filter(request):
             for order_list in province_list:
 
                 data['province'].append(order_list['province'])
-
+                print(order_list['province'])
 
         except:
             #data['status'] = 2

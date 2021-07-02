@@ -4,6 +4,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework import permissions
+
+from admin_api.package.log import log
 from admin_api.permissions import *
 
 import bcrypt
@@ -319,7 +321,7 @@ def user_remove(request, pk):
         user_del = User.objects.get(id=user_pk)
         user_del.delete()
         # TODO---- Enable block later
-        # log(request, typ='Delete user', content='Delete user ' + str(pk))
+        log(request, typ='Delete user', content='Delete user ' + str(pk))
         res = Response(status=HTTP_200_OK)
         res['HTTP_X_CSTATUS'] = 0
         return res
