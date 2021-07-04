@@ -64,7 +64,7 @@ def list(request):
     if start_date and end_date:
         q.add(Q(date__range=[start_date,end_date]),Q.AND)
 
-    #q.add(Q(graduate_fk=None),Q.AND)
+    q.add(Q(graduate_fk=None),Q.AND)
     try:
         checkup = Checkup.objects.select_related('student_fk').select_related('student_fk__school_fk').filter(q)
 

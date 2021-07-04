@@ -121,6 +121,12 @@ def login(request):
     pw = request_json.get('password','')
 
     data = {}
+    data['province'] = ""
+    data['district'] = ""
+    data['commune'] = ""
+    data['school_name'] = ""
+
+
     header = {}
     if not pw:
 
@@ -140,6 +146,34 @@ def login(request):
 
 
     user = LoginSerializer(obj).data
+
+    if user['user_level'] == 1:
+        area = Area.objects.select_related('province_fk').get(area_id = user['area_fk'])
+        data['province'] = area.province_fk.province
+
+    elif user['user_level'] == 2:
+        area = Area.objects.select_related('province_fk')\
+                    .select_related('district_fk').get(area_id = user['area_fk'])
+        data['province'] = area.province_fk.province
+        data['district'] = area.district_fk.district
+
+    elif user['user_level'] == 3:
+        area = Area.objects.select_related('province_fk')\
+                    .select_related('district_fk')\
+                    .select_related('commune_clinic_fk').get(area_id = user['area_fk'])
+        data['province'] = area.province_fk.province
+        data['district'] = area.district_fk.district
+        data['commune'] = area.commune_clinic_fk.commune_clinic
+
+    elif user['user_level'] == 4:
+        area = Area.objects.select_related('province_fk')\
+                    .select_related('district_fk')\
+                    .select_related('commune_clinic_fk').get(area_id = user['area_fk'])
+        data['province'] = area.province_fk.province
+        data['district'] = area.district_fk.district
+        data['commune'] = area.commune_clinic_fk.commune_clinic
+        data['school_name'] = School.objects.get(id = user['school_fk']).school_name
+
     try:
         if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
         #if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:
@@ -218,11 +252,15 @@ def account_detail(request):
 @api_view(['POST'])
 @permission_classes((AllAuthenticated,))
 def account_edit(request):
-    user_id = request.POST.get('user_id')
-    user_name = request.POST.get('user_name')
-    user_tel = request.POST.get('user_tel')
-    user_mobile = request.POST.get('user_mobile')
-    email_address = request.POST.get('email_address')
+
+    request_json = json.loads(request.body)
+
+    user_id = request_json.get('user_id','')
+    user_name = request_json.get('user_name','')
+    user_tel = request_json.get('user_tel', '')
+    user_mobile = request_json.get('user_mobile', '')
+    email_address = request_json.get('email_address', '')
+
 
     user_pk = User.objects.get(user_id__exact=user_id).id
 
@@ -236,7 +274,7 @@ def account_edit(request):
 
     account.save()
     # TODO---- Enable block later
-    # log(request, typ='Add school', content='Update user ' + user_id)
+    log(request, typ='Add school', content='Update user ' + user_id)
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0
@@ -248,13 +286,14 @@ def account_edit(request):
 @permission_classes((AllAuthenticated,))
 def account_pw(request):
     try:
-        user_id = request.POST.get('user_id')
-        pw_old = request.POST.get('pw_old')
-        pw_new = request.POST.get('pw_new')
+        request = json.loads(request.body)
+        user_id = request.get('user_id','')
+        pw_old = request.get('pw_old','')
+        pw_new = request.get('pw_new','')
 
         pw_db = User.objects.get(user_id__exact=user_id).password
 
-        pw_check = bcrypt.checkpw(pw_old.encode('utf-8'), pw_db)
+        pw_check = bcrypt.checkpw(pw_old.encode('utf-8'), pw_db.encode('utf-8'))
 
         if not pw_check:
             raise ValueError(2)

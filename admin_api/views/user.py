@@ -103,18 +103,20 @@ def user_check(request):
 @api_view(['POST'])
 @permission_classes((IsMaster,))
 def user_add(request):
-    province = request.data['province']
-    district = request.data['district']
-    commune_clinic = request.data['commune_clinic']
-    school_name = request.data['school_name']
-    user_group = request.data['user_group']
+
+    request_json = json.loads(request.body)
+    province = request_json.get('province','')
+    district = request_json.get('district','')
+    commune_clinic = request_json.get('commune_clinic','')
+    school_name = request_json.get('school_name','')
+    user_group = request_json.get('user_group','')
     user_level = level_dic[user_group]
 
     user_insert = User()
-    user_insert.user_id = request.data['user_id']
-    user_insert.password = bcrypt.hashpw(request.data['user_id'].encode('utf-8'), bcrypt.gensalt(5)).decode('utf-8')
-    user_insert.user_name = request.data['user_name']
-    user_insert.user_tel = request.data['user_tel']
+    user_insert.user_id = request_json.get('user_id')
+    user_insert.password = bcrypt.hashpw(request_json.get('user_id').encode('utf-8'), bcrypt.gensalt(5)).decode('utf-8')
+    user_insert.user_name = request_json.get('user_name','')
+    user_insert.user_tel = request_json.get('user_tel','')
     user_insert.user_group = user_group
     user_insert.user_level = user_level
 
@@ -169,7 +171,7 @@ def user_add(request):
 
     user_insert.save()
     # TODO---- Enable block later
-    # log(request, typ='Add user', content='Insert user ' + user_id)
+    log(request, typ='Add user', content='Insert user ' + request_json.get('user_id'))
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0
@@ -193,7 +195,7 @@ def reset_pw(request):
             user_pw.save()
 
             # TODO---- Enable block later
-            # log(request, typ='Reset password', content='Update password ' + user_id)
+            log(request, typ='Reset password', content='Update password ' + user_id)
             pas = {"password": password}
             res = Response(pas, status=HTTP_200_OK)
             res['HTTP_X_CSTATUS'] = 0

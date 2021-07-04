@@ -559,7 +559,7 @@ def student_get(request,student_id):
 
     student_obj = Student.objects.get(student_id=student_id)
     student_serializer = AddStudentSerializer(student_obj).data
-    print(student_serializer)
+    #print(student_serializer)
 
     student_serializer.pop('pic')
 
@@ -633,10 +633,23 @@ def student_modify(request):
 
     """학생 정보 수정시 사용 api"""
 
+    student_data = {}
+    student_data['student_id'] = request.POST.get('student_id','')
+    student_data['school_fk'] = request.POST.get('school_fk','')
+    student_data['student_name'] = request.POST.get('student_name','')
+    student_data['grade'] = request.POST.get('grade','')
+    student_data['grade_class'] = request.POST.get('grade_class','')
+    student_data['student_number'] = request.POST.get('student_number', '')
+    student_data['village'] = request.POST.get('village', '')
+    student_data['gender'] = request.POST.get('gender', '')
+    student_data['date_of_birth'] = request.POST.get('date_of_birth', '')
+    student_data['medical_insurance_number'] = request.POST.get('medical_insurance_number', '')
+    student_data['contact'] = request.POST.get('contact', '')
+    student_data['parents_name'] = request.POST.get('parents_name', '')
 
-    student_data = request.POST.get('info','')
-    student_data = json.loads(student_data)
-
+    #student_data = request.POST.get('info','')
+    #student_data = json.loads(student_data)
+    print(student_data)
     file_data = request.FILES.get('file','')
 
     header = {}
@@ -644,8 +657,9 @@ def student_modify(request):
         student_data['pic'] = file_data
 
     student_id = student_data.pop('student_id')
+
     try:
-        student_obj = Student.objects.get(student_id=student_id)
+        student_obj = Student.objects.get(medical_insurance_number=student_data['medical_insurance_number'])
 
     except:
         #data = {}

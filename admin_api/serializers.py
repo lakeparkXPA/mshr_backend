@@ -14,7 +14,7 @@ class LoginSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields =['user_id', 'user_level', 'password', 'token']
+        fields =['user_id', 'user_level', 'password', 'token','area_fk','school_fk']
 
 class RefreshTokenSerializer(serializers.ModelSerializer):
 
@@ -245,7 +245,7 @@ class CheckUpListSerializer(serializers.ModelSerializer):
 
         for field in field_list:
             if data[field] == None:
-                data[field]=''
+                data[field] = -1
 
         if instance.student_fk:
             student = StudentSerializer(instance.student_fk).data
@@ -261,8 +261,12 @@ class CheckUpListSerializer(serializers.ModelSerializer):
             cur_year = datetime.datetime.today().year
             data['age'] = cur_year - birth_year + 1
 
-            height_m = data['height'] / 100
-            data['bmi'] = round(data['weight'] / (height_m ** 2), 2)
+
+            if data['height'] == -1 or data['weight'] == -1:
+                data['bmi'] = 0
+            else:
+                height_m = data['height'] / 100
+                data['bmi'] = round(data['weight'] / (height_m ** 2), 2)
             data['hc_year'] = data['date'][0:4]
 
         data.pop('graduate_fk')
@@ -306,8 +310,11 @@ class CheckUpDownSerializer(serializers.ModelSerializer):
         birth_year =datetime.datetime.strptime(total_data['date_of_birth'],"%Y-%m-%d").year
         cur_year = datetime.datetime.today().year
         total_data['age'] = cur_year-birth_year+1
-        height_m = total_data['height']/100
-        total_data['bmi'] = round(total_data['weight'] / (height_m**2),2)
+        if total_data['height'] == '' or total_data['weight'] == '':
+            total_data['bmi'] = 0
+        else:
+            height_m = total_data['height']/100
+            total_data['bmi'] = round(total_data['weight'] / (height_m**2),2)
 
         total_data.pop('graduate_fk')
         total_data.pop('checked')
@@ -339,11 +346,19 @@ class CheckUpGetSerializier(serializers.ModelSerializer):
 
         if instance.student_fk:
             student = AddStudentSerializer(instance.student_fk).data
-
+            school_name = School.objects.get(id=student['school_fk']).school_name
+            print(school_name)
             data['grade'] = student['grade']
             data['grade_class'] = student['grade_class']
             data['student_number'] = student['student_number']
             data['village'] = student['village']
+            data['medical_insurance_number'] = student['medical_insurance_number']
+            data['date_of_birth'] = student['date_of_birth']
+            data['gender'] = student['gender']
+            data['school_fk'] = student['school_fk']
+            data['student_id'] = student['student_id']
+            data['student_name'] = student['student_name']
+            data['school_name'] = school_name
         data.pop('student_fk')
         data.pop('graduate_fk')
         data.pop('checked')
