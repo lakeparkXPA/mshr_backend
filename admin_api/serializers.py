@@ -359,6 +359,12 @@ class CheckUpGetSerializier(serializers.ModelSerializer):
             data['student_id'] = student['student_id']
             data['student_name'] = student['student_name']
             data['school_name'] = school_name
+
+            if data['height'] == None or data['weight'] == None:
+                data['bmi'] = 0
+            else:
+                height_m = data['height'] / 100
+                data['bmi'] = round(data['weight'] / (height_m ** 2), 2)
         data.pop('student_fk')
         data.pop('graduate_fk')
         data.pop('checked')

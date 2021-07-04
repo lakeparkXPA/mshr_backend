@@ -154,6 +154,8 @@ def school_detail(request):
 @api_view(['PUT'])
 @permission_classes((IsMaster,))
 def school_edit(request):
+
+    print(request.data)
     area_id = Area.objects.select_related('province_fk').select_related('district_fk'). \
         select_related('commune_clinic_fk').filter(
         Q(province_fk__province__exact=request.data['province']) &
@@ -183,7 +185,7 @@ def school_edit(request):
 
     school.save()
     # TODO---- Enable block later
-    # log(request, typ='Update school', content='Update school ' + school_id)
+    log(request, typ='Update school', content='Update school ' + request.data['school_id'])
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0
@@ -199,7 +201,7 @@ def school_remove(request, pk):
         school_del = School.objects.get(id=school_pk)
         school_del.delete()
         # TODO---- Enable block later
-        # log(request, typ='Delete school', content='Delete school ' + str(pk))
+        log(request, typ='Delete school', content='Delete school ' + str(pk))
         res = Response(status=HTTP_200_OK)
         res['HTTP_X_CSTATUS'] = 0
         return res

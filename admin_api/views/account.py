@@ -125,6 +125,7 @@ def login(request):
     data['district'] = ""
     data['commune'] = ""
     data['school_name'] = ""
+    data['school_id'] = ""
 
 
     header = {}
@@ -172,8 +173,9 @@ def login(request):
         data['province'] = area.province_fk.province
         data['district'] = area.district_fk.district
         data['commune'] = area.commune_clinic_fk.commune_clinic
-        data['school_name'] = School.objects.get(id = user['school_fk']).school_name
-
+        school = School.objects.filter(id = user['school_fk']).values('school_name','school_id').first()
+        data['school_name'] = school['school_name']
+        data['school_id'] = school['school_id']
     try:
         if bcrypt.checkpw(pw.encode("utf-8"),user['password'].encode("utf-8")):
         #if hashlib.sha256(request.data['password'].encode()).hexdigest() == user['password']:

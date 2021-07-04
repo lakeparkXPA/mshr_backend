@@ -65,8 +65,13 @@ def user_lst(request):
                                             'user_group',
                                             school_name=F('school_fk__school_name'))
 
+        # if search:
+        #     users_filter = users_select.filter(Q(school_name__contains=search)).exclude(id__isnull=True)
+        # else:
+        #     users_filter = users_select.exclude(id__isnull=True)
+
         if search:
-            users_filter = users_select.filter(Q(school_name__contains=search)).exclude(id__isnull=True)
+            users_filter = users_select.filter(Q(user_name__contains=search)).exclude(id__isnull=True)
         else:
             users_filter = users_select.exclude(id__isnull=True)
         res = Response(users_filter, status=HTTP_200_OK)
@@ -308,7 +313,7 @@ def user_edit(request):
 
     user_insert.save()
     # TODO---- Enable block later
-    # log(request, typ='Add school', content='Update user ' + user_id)
+    log(request, typ='update user', content='Update user ' + request.data['user_id'])
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0

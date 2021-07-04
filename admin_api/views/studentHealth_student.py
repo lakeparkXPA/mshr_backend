@@ -118,11 +118,12 @@ def student_list(request):
                 elif user['user_level']==2:
 
                     area_list = Area.objects.prefetch_related('school_set').\
-                                    prfetch_related('school_set__student_set').\
+                                    prefetch_related('school_set__student_set').\
                                     filter(province_fk=user['area_fk__province_fk'],
                                             district_fk=user['area_fk__district_fk'])
 
                     #student_list = []
+
                     for area in area_list:
                         for school in area.school_set.all():
                             student_serializer = StudentSerializer(school.student_set.all(),many=True).data
@@ -138,7 +139,7 @@ def student_list(request):
                     """유저가 commune_clinic 계정 인 경우"""
 
                     area_list = Area.objects.prefetch_related('school_set').\
-                                    prfetch_related('school_set__student_set').\
+                                    prefetch_related('school_set__student_set').\
                                     filter(province_fk=user['area_fk__province_fk'],
                                             district_fk=user['area_fk__district_fk'],
                                             commune_clinic_fk=user['area_fk__commune_clinic_fk'])
@@ -566,6 +567,8 @@ def student_get(request,student_id):
     data['info'] = student_serializer
 
     header['HTTP_X_CSTATUS'] = 0
+    print("student_detail")
+    print(data)
     return Response(data,headers=header, status=HTTP_200_OK)
 
 
