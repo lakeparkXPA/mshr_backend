@@ -971,7 +971,7 @@ def student_addAll(request):
 
 
 
-    df = df.drop(['No'],axis=1)
+    # df = df.drop(['No'],axis=1)
     print(df)
     school_id_list = list(set(df['School ID']))
     print(school_id_list)
@@ -983,7 +983,7 @@ def student_addAll(request):
         df['School ID'] = df['School ID'].apply(lambda x:school_fk['id'] if x==school_id else x)
 
 
-    df.columns = ['school_fk','student_name',
+    df.columns = ['school_fk','student_id',
                   'grade','grade_class','student_number','date_of_birth',
                   'gender','medical_insurance_number','village','contact','parents_name']
     df = df.replace(np.NAN,'')
@@ -1000,7 +1000,7 @@ def student_addAll(request):
             #print(k)
             #student.k = df.values[i][j]
             if k =='date_of_birth':
-                data[k] = df.values[i][j].date()
+                data[k] = datetime.datetime.strptime(df.values[i][j],"%Y-%m-%d").date()
             else:
                 data[k] = df.values[i][j]
 

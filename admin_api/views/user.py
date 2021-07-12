@@ -221,8 +221,9 @@ def user_detail(request):
     try:
         user = User.objects.filter(user_id__exact=user_id).select_related('area_fk').select_related('school_fk')
     except:
-        data['status'] = 1
-        return Response(data, status=HTTP_400_BAD_REQUEST)
+        res = Response(status=HTTP_400_BAD_REQUEST)
+        res['HTTP_X_CSTATUS'] = 1
+        return res
 
     user_replace = user.extra(select={'user_mobile': "coalesce(user_mobile, '')",
                                       'email_address': "coalesce(user.email_address, '')",

@@ -102,18 +102,18 @@ def school_add(request):
     if request.data['director']:
         school.director = request.data['director']
     if request.data['email_address']:
-        school.director = request.data['email_address']
+        school.email_address = request.data['email_address']
     if request.data['commune_center_tel']:
-        school.director = request.data['commune_center_tel']
+        school.commune_center_tel = request.data['commune_center_tel']
     if request.data['department_head_tel']:
-        school.director = request.data['department_head_tel']
+        school.department_head_tel = request.data['department_head_tel']
     if request.data['remarks']:
-        school.director = request.data['remarks']
+        school.remarks = request.data['remarks']
 
 
     school.save()
     # TODO---- Enable block later
-    log(request, typ='Add school', content='Insert school ' + school_id)
+    log(request, typ='Add school', content='Insert school ' + str(request.data['school_id']))
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0
@@ -175,17 +175,17 @@ def school_edit(request):
     if request.data['director']:
         school.director = request.data['director']
     if request.data['email_address']:
-        school.director = request.data['email_address']
+        school.email_address = request.data['email_address']
     if request.data['commune_center_tel']:
-        school.director = request.data['commune_center_tel']
+        school.commune_center_tel = request.data['commune_center_tel']
     if request.data['department_head_tel']:
-        school.director = request.data['department_head_tel']
+        school.department_head_tel = request.data['department_head_tel']
     if request.data['remarks']:
-        school.director = request.data['remarks']
+        school.remarks = request.data['remarks']
 
     school.save()
     # TODO---- Enable block later
-    log(request, typ='Update school', content='Update school ' + request.data['school_id'])
+    log(request, typ='Update school', content='Update school ' + str(request.data['school_id']))
 
     res = Response(status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0

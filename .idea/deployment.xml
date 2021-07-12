@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="ubuntu@ec2-13-125-225-181.ap-northeast-2.compute.amazonaws.com:22 key" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="ubuntu@18.141.253.15:22 key" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="ubuntu@ec2-13-125-225-181.ap-northeast-2.compute.amazonaws.com:22 key">
+      <paths name="bom">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/ubuntu/bom" local="$PROJECT_DIR$" />
+            <mapping deploy="/vnschool" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ubuntu@18.141.253.15:22 key">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ubuntu/vnschool" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

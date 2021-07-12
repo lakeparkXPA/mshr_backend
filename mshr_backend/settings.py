@@ -26,7 +26,7 @@ ALGORITHM = 'HS256'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['13.125.225.181','127.0.0.1']
+ALLOWED_HOSTS = ['api.vnschoolhealth.net']
 
 
 # Application definition
@@ -114,10 +114,10 @@ WSGI_APPLICATION = 'mshr_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bom_dev',
+        'NAME': 'bom',
         'USER': 'admin',
-        'PASSWORD' : 'docl2021!',
-        'HOST' : 'docl-test.clmrmnvcroxg.ap-northeast-2.rds.amazonaws.com',
+        'PASSWORD' : 'yonsei1885!',
+        'HOST' : 'vn-db.c1qt942tssxv.ap-southeast-1.rds.amazonaws.com',
         'PORT' : 3306
     }
 }

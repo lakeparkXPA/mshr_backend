@@ -207,7 +207,7 @@ def login(request):
             obj.token = refresh_token.decode()
             obj.save()
 
-            log(request,typ='Log in', content='Login success')
+            log(request, typ='Log in', content='Login success')
             header['HTTP_X_CSTATUS'] = 0
             return Response(data, headers=header,status=HTTP_200_OK)
 
@@ -221,6 +221,7 @@ def login(request):
     except Exception as e:
         #data['status'] = 4
         print(str(e))
+        header['error'] = str(e)
         header['HTTP_X_CSTATUS']=4
         return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 

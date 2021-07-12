@@ -15,7 +15,7 @@ import requests, shutil, os
 
 # (IsMaster,IsProvince,IsDistrict,)
 @api_view(['POST'])
-@permission_classes((OverDistrict,))
+@permission_classes((AllAuthenticated,))
 def notice_lst(request):
 
     try:
@@ -42,7 +42,7 @@ def notice_lst(request):
 
         if search:
             notice = notice_filter.filter(Q(title__contains=search) |
-                                          Q(user_namme__contatins=search)).exclude(notice_id__isnull=True)
+                                          Q(user_name__contains=search)).exclude(notice_id__isnull=True)
         else:
             notice = notice_filter.exclude(notice_id=True)
 
@@ -64,10 +64,10 @@ def notice_lst(request):
 
 
 
-#@permission_classes((OverDistrict,))
 class NoticeFileUpload(generics.CreateAPIView):
     queryset = NoticeFile.objects.all()
     serializer_class = FileUploadSerializer
+    permission_classes = (AllAuthenticated,)
     def create(self, request, *args, **kwargs):
         try:
             notice_pk = request.POST.get('notice_fk')
@@ -114,7 +114,7 @@ def notice_add(request):
         notice_return = {'notice_fk': notice.notice_id, 'req_type': 'add'}
         notice_data = {'attachments': request.FILES.get('attachments')}
 
-        response = requests.post('http://127.0.0.1:8000/admin_api/management/notice/upload/',
+        response = requests.post('https://api.vnschoolhealth.net/admin_api/management/notice/upload/',
                                  files=notice_data, data=notice_return)
         try:
             res = Response(status=HTTP_200_OK)
@@ -131,7 +131,7 @@ def notice_add(request):
 
 
 @api_view(['GET'])
-@permission_classes((OverDistrict,))
+@permission_classes((AllAuthenticated,))
 def notice_detail(request):
     try:
         notice_id = request.GET.get('notice_id')
@@ -154,7 +154,7 @@ def notice_detail(request):
 
 
 @api_view(['GET'])
-@permission_classes((OverDistrict,))
+@permission_classes((AllAuthenticated,))
 def notice_file(request):
     try:
         notice_id = request.GET.get('notice_id')
@@ -203,7 +203,7 @@ def notice_edit(request):
 
             file_old_pk = NoticeFile.objects.get(notice_fk__exact=notice.notice_id).id
 
-            requests.post('http://127.0.0.1:8000/admin_api/management/notice/upload/',
+            requests.post('https://api.vnschoolhealth.net/admin_api/management/notice/upload/',
                           files=notice_data, data=notice_return)
 
             NoticeFile.objects.get(id=file_old_pk).delete()

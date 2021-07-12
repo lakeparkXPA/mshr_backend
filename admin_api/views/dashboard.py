@@ -47,7 +47,8 @@ def dashboard_info(request):
     if commune:
         q.add(Q(student_fk__school_fk__area_fk__commune_clinic_fk__commune_clinic=commune),q.AND)
     if school_id:
-        q.add(Q(student_fk__school_fk__id=school_id),q.AND)
+        school_pk = School.objects.get(school_id=school_id)
+        q.add(Q(student_fk__school_fk__id=school_pk),q.AND)
 
     if start_date and end_date:
         q.add(Q(date__range=[start_date,end_date]),q.AND)
@@ -371,7 +372,7 @@ def dashboard_filter(request):
             select_related('area_fk__commune_clinic_fk').\
             filter(area_fk__province_fk__province=province,
                    area_fk__district_fk__district=district,
-                   area_fk__commune_clinic_fk__commune_clinic=commune).values('school_id','school_name')
+                   area_fk__commune_clinic_fk__commune_clinic=commune).values('pk', 'school_name')
 
         data['schools'] = []
 
