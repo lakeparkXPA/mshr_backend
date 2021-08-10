@@ -26,7 +26,7 @@ ALGORITHM = 'HS256'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['api.vnschoolhealth.net']
+ALLOWED_HOSTS = ['api.vnschoolhealth.net','testserver']
 
 
 # Application definition
@@ -82,6 +82,10 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'user-id',
+    'testserver',
+    'status',
+    'access-control-allow-methods',
+    'access-control-allow-origin ',
 ]
 CORS_EXPOSE_HEADERS = [
     'HTTP_X_CSTATUS',

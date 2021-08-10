@@ -45,8 +45,7 @@ def user_lst(request):
             area_id = Area.objects.values('area_id')
         elif user_level == 1:
             area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.province_fk
-            area_id = Area.objects.filter(Q(province_fk__exact=area) & Q(district_fk__isnull=False)).\
-                values('area_id')
+            area_id = Area.objects.filter(Q(province_fk__exact=area)).values('area_id')
         else:
             raise ValueError(2)
 

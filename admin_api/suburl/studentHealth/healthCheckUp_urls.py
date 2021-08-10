@@ -6,6 +6,7 @@ urlpatterns=[
     path('getCheckUpList',studentHealth_healthCheckUp.list),
     path('getStudentList',studentHealth_healthCheckUp.stuList),
     path('addCheckUp',studentHealth_healthCheckUp.addCheckUp),
+    path('addCheckUps',studentHealth_healthCheckUp.addCheckUps),
     path('modiCheckUp',studentHealth_healthCheckUp.modiCheckUp),
 
     path('getCheckUp',studentHealth_healthCheckUp.getCheckUp),

@@ -1,7 +1,7 @@
 import os
 import datetime
 
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import FileResponse, JsonResponse, HttpResponse
 import xlwt
 
@@ -23,11 +23,14 @@ from django.db import transaction
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def student_list(request):
-
+    user_id = request.META.get('HTTP_USER_ID', '')
     """학생 리스트 조회"""
     request = json.loads(request.body)
 
     user_id = request.get('user_id','')
+    province = request.get('province', '')
+    district = request.get('district', '')
+    commune = request.get('commune', '')
     school_id = request.get('school_id','')
     grade = request.get('grade','')
     name_id = request.get('name','')
@@ -35,13 +38,32 @@ def student_list(request):
     header = {}
 
     q = Q()
-    data = {}
-    """필터링 조건으로 조회할 경우"""
-    student_list = []
-    if school_id or grade or name_id:
 
+    if school_id or grade or name_id or province or district or commune:
+        if province:
+            q.add(Q(school_fk__area_fk__province_fk__province=province), q.AND)
+        if district:
+            q.add(Q(school_fk__area_fk__district_fk__district=district), q.AND)
+        if commune:
+            q.add(Q(school_fk__area_fk__commune_clinic_fk__commune_clinic=commune), q.AND)
         if school_id:
             q.add(Q(school_fk__id=school_id),q.AND)
+        else:
+            user_level = User.objects.get(user_id__iexact=user_id).user_level
+
+            if user_level == 0:
+                pass
+            elif user_level == 1:
+                area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.province_fk
+                area_id = Area.objects.filter(Q(province_fk__exact=area)).values('area_id')
+                school_id = School.objects.filter(area_fk__in=area_id).values('id')
+                q.add(Q(school_fk__id__in=school_id), q.AND)
+            else:
+                area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.district_fk
+                area_id = Area.objects.filter(Q(district_fk__exact=area)).values('area_id')
+                school_id = School.objects.filter(area_fk__in=area_id).values('id')
+                q.add(Q(school_fk__id__in=school_id), q.AND)
+
         if grade:
             q.add(Q(grade=grade),q.AND)
 
@@ -57,16 +79,6 @@ def student_list(request):
             header['HTTP_X_CSTATUS'] = 3
             return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-            #raise exceptions.ValidationError(data)
-
-        student_serializer = StudentSerializer(students_obj,many=True).data
-
-        #student_list = []
-        for student_data in student_serializer:
-            student_list.append(student_data)
-        data['students'] = student_list
-
-
     else:
 
         """유저가 확인 가능한 전체 조회할 경우"""
@@ -77,102 +89,33 @@ def student_list(request):
                                     values('user_level','area_fk','school_fk',
                                     'area_fk__province_fk','area_fk__district_fk',
                                     'area_fk__commune_clinic_fk')[0]
-
-
             try:
                 if user['user_level']==0:
 
                     """유저가 마스터 계정일경우"""
-                    students_obj = Student.objects.all()
-                    #student_list = []
-                    student_serializer = StudentSerializer(students_obj,many=True).data
-                    #print(student_serializer)
-                    for student_data in student_serializer:
-                        student_list.append(student_data)
+                    students_obj = Student.objects.select_related('school_fk')
 
-
-                    data['students']=student_list
-
-
-                elif user['user_level']==1:
-
+                elif user['user_level'] == 1:
                     """유저가 province계정 인 경우"""
-
-                    area_list = Area.objects.prefetch_related('school_set').\
-                                    prefetch_related('school_set__student_set').\
-                                    filter(province_fk=user['area_fk__province_fk'])
-
-
-                    #student_list = []
-                    for area in area_list:
-                        for school in area.school_set.all():
-                            student_serializer = StudentSerializer(school.student_set.all(),many=True).data
-                            for student_data in student_serializer:
-                                student_list.append(student_data)
-
-
-                    data['students'] = student_list
-
-
+                    students_obj = Student.objects.select_related('school_fk').select_related('area_fk').\
+                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'])
 
                 elif user['user_level']==2:
-
-                    area_list = Area.objects.prefetch_related('school_set').\
-                                    prefetch_related('school_set__student_set').\
-                                    filter(province_fk=user['area_fk__province_fk'],
-                                            district_fk=user['area_fk__district_fk'])
-
-                    #student_list = []
-
-                    for area in area_list:
-                        for school in area.school_set.all():
-                            student_serializer = StudentSerializer(school.student_set.all(),many=True).data
-                            for student_data in student_serializer:
-                                student_list.append(student_data)
-
-                    data['students'] = student_list
-
-
+                    students_obj = Student.objects.select_related('school_fk').select_related('area_fk'). \
+                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
+                               school_fk__area_fk__district_fk=user['area_fk__district_fk'])
 
                 elif user['user_level']==3:
-
+                    students_obj = Student.objects.select_related('school_fk').select_related('area_fk'). \
+                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
+                               school_fk__area_fk__district_fk=user['area_fk__district_fk'],
+                               school_fk__area_fk__commune_clinic_fk=user['area_fk__commune_clinic_fk'])
                     """유저가 commune_clinic 계정 인 경우"""
-
-                    area_list = Area.objects.prefetch_related('school_set').\
-                                    prefetch_related('school_set__student_set').\
-                                    filter(province_fk=user['area_fk__province_fk'],
-                                            district_fk=user['area_fk__district_fk'],
-                                            commune_clinic_fk=user['area_fk__commune_clinic_fk'])
-
-                    #student_list = []
-                    for area in area_list:
-                        for school in area.school_set.all():
-                            student_serializer = StudentSerializer(school.student_set.all(),many=True).data
-                            for student_data in student_serializer:
-                                student_list.append(student_data)
-
-                    data['students'] = student_list
-
-
 
                 elif user['user_level']==4:
 
-                    student = Student.objects.select_related('school_fk').\
+                    students_obj = Student.objects.select_related('school_fk').\
                                     filter(school_fk=user['school_fk'])
-
-
-                    #student_list = []
-
-                    student_serializer = StudentSerializer(student.all(),many=True).data
-
-                    for student_data in student_serializer:
-                        student_list.append(student_data)
-
-
-                    data['students'] = student_list
-
-
-
 
             except:
                 header['HTTP_X_CSTATUS'] = 2
@@ -185,8 +128,10 @@ def student_list(request):
             header['HTTP_X_CSTATUS'] = 1
             return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-    #data['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
+
+    student_list = students_obj.values('student_id', 'medical_insurance_number', 'student_name', 'date_of_birth', 'gender', 'grade', 'grade_class', school_id=F('school_fk__school_id'), school_name=F('school_fk__school_name'))
+
     return Response(student_list,headers=header,status=HTTP_200_OK)
 
 @api_view(['POST'])
@@ -211,6 +156,21 @@ def student_listDownload(request):
 
         if school_id:
             q.add(Q(school_fk__id=school_id),q.AND)
+        else:
+            user_level = User.objects.get(user_id__iexact=user_id).user_level
+
+            if user_level == 0:
+                pass
+            elif user_level == 1:
+                area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.province_fk
+                area_id = Area.objects.filter(Q(province_fk__exact=area)).values('area_id')
+                school_id = School.objects.filter(area_fk__in=area_id).values('id')
+                q.add(Q(school_fk__id__in=school_id), q.AND)
+            else:
+                area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.district_fk
+                area_id = Area.objects.filter(Q(district_fk__exact=area)).values('area_id')
+                school_id = School.objects.filter(area_fk__in=area_id).values('id')
+                q.add(Q(school_fk__id__in=school_id), q.AND)
         if grade:
             q.add(Q(grade=grade),q.AND)
 
@@ -224,11 +184,6 @@ def student_listDownload(request):
         except:
             header['HTTP_X_CSTATUS'] = 3
             return Response(headers=header,status=HTTP_400_BAD_REQUEST)
-
-        student_serializer = StudentDownloadSerializer(students_obj,many=True)
-
-        student_list = student_serializer.data
-        data['students'] = student_list
 
 
     else:
@@ -244,92 +199,32 @@ def student_listDownload(request):
 
 
             try:
-                if user['user_level']==0:
+                if user['user_level'] == 0:
 
                     """유저가 마스터 계정일경우"""
-                    students_obj = Student.objects.all()
-                    student_list = []
-                    student_serializer = StudentDownloadSerializer(students_obj,many=True).data
-                    student_list.append(student_serializer)
+                    students_obj = Student.objects.select_related('school_fk')
 
-                    data['students']=student_list
-
-
-
-
-                elif user['user_level']==1:
-
+                elif user['user_level'] == 1:
                     """유저가 province계정 인 경우"""
+                    students_obj = Student.objects.select_related('school_fk').select_related('area_fk'). \
+                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'])
 
+                elif user['user_level'] == 2:
+                    students_obj = Student.objects.select_related('school_fk').select_related('area_fk'). \
+                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
+                               school_fk__area_fk__district_fk=user['area_fk__district_fk'])
 
-
-                    area_list = Area.objects.prefetch_related('school_set').\
-                                    prefetch_related('school_set__student_set').\
-                                    filter(province_fk=user['area_fk__province_fk'])
-
-
-                    student_list = []
-
-                    for area in area_list:
-                        for school in area.school_set.all():
-                            student_serializer = StudentDownloadSerializer(school.student_set.all(),many=True).data
-                            student_list.append(student_serializer)
-
-                    data['students'] = student_list
-
-
-
-                elif user['user_level']==2:
-
-                    area_list = Area.objects.prefetch_related('school_set').\
-                                    prfetch_related('school_set__student_set').\
-                                    filter(province_fk=user['area_fk__province_fk'],
-                                            district_fk=user['area_fk__district_fk'])
-
-                    student_list = []
-
-                    for area in area_list:
-                        for school in area.school_set.all():
-                            student_serializer = StudentDownloadSerializer(school.student_set.all(),many=True).data
-                            student_list.append(student_serializer)
-
-                    data['students'] = student_list
-
-
-
-                elif user['user_level']==3:
-
+                elif user['user_level'] == 3:
+                    students_obj = Student.objects.select_related('school_fk').select_related('area_fk'). \
+                        filter(school_fk__area_fk__province_fk=user['area_fk__province_fk'],
+                               school_fk__area_fk__district_fk=user['area_fk__district_fk'],
+                               school_fk__area_fk__commune_clinic_fk=user['area_fk__commune_clinic_fk'])
                     """유저가 commune_clinic 계정 인 경우"""
 
-                    area_list = Area.objects.prefetch_related('school_set').\
-                                    prfetch_related('school_set__student_set').\
-                                    filter(province_fk=user['area_fk__province_fk'],
-                                            district_fk=user['area_fk__district_fk'],
-                                            commune_clinic_fk=user['area_fk__commune_clinic_fk'])
+                elif user['user_level'] == 4:
 
-                    student_list = []
-
-                    for area in area_list:
-                        for school in area.school_set.all():
-                            student_serializer = StudentDownloadSerializer(school.student_set.all(),many=True).data
-                            student_list.append(student_serializer)
-
-                    data['students'] = student_list
-
-
-
-                elif user['user_level']==4:
-
-                    student = Student.objects.select_related('school_fk').\
-                                    filter(school_fk=user['school_fk'])
-
-
-                    student_list = []
-                    student_serializer = StudentDownloadSerializer(student.all(),many=True).data
-
-                    student_list.append(student_serializer)
-                    data['students'] = student_list
-
+                    students_obj = Student.objects.select_related('school_fk'). \
+                        filter(school_fk=user['school_fk'])
 
 
 
@@ -364,15 +259,24 @@ def student_listDownload(request):
     #headef font are bold
     font_style.font.bold = True
 
-    columns = ['School ID','Student ID','Name','Grade','Class','Student Number','DOB',
+    columns = ['Student ID','Name','School ID','School Name','Grade','Class','Student Number','DOB',
                   'Gender','MIN','Village','Contact','Parents']
 
     for idx, col_name in enumerate(columns):
         ws.write(row_num,idx,col_name,font_style)
 
+    student_list = students_obj.values('student_id', 'student_name','grade', 'grade_class', 'student_number',
+                                       'date_of_birth', 'gender', 'medical_insurance_number', 'village', 'contact',
+                                       'parents_name', school_id=F('school_fk__school_id'),
+                                       school_name=F('school_fk__school_name')).\
+        values('student_id', 'student_name', 'school_id', 'school_name','grade', 'grade_class', 'student_number',
+               'date_of_birth', 'gender', 'medical_insurance_number', 'village', 'contact','parents_name')
 
-    data = data['students'][0]
-    for row in data:
+    if len(student_list) == 1:
+        data_students = [student_list]
+    else:
+        data_students = student_list
+    for row in data_students:
         row_num+=1
         for col,value in enumerate(row.values()):
             ws.write(row_num,col,value)
@@ -490,6 +394,7 @@ def student_add(request):
     student_data['contact'] = request.POST.get('contact', '')
     student_data['parents_name'] = request.POST.get('parents_name', '')
 
+
     print(student_data)
 
     #student_data = request.POST.get('info','')
@@ -510,10 +415,7 @@ def student_add(request):
     """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
     if Student.objects\
             .filter(medical_insurance_number=student_data['medical_insurance_number'])\
-            .exists() or \
-            Graduate.objects.\
-                    filter(medical_insurance_number=student_data['medical_insurance_number'])\
-                    .exists():
+            .exists():
 
         header['HTTP_X_CSTATUS'] = 1
         return Response(headers=header,status=HTTP_409_CONFLICT)
@@ -616,10 +518,7 @@ def min_check(request):
     """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
     if Student.objects\
             .filter(medical_insurance_number=min)\
-            .exists() or \
-            Graduate.objects.\
-                    filter(medical_insurance_number=min)\
-                    .exists():
+            .exists():
         data['check'] = False
     else:
         data['check'] = True
@@ -940,8 +839,6 @@ def student_delete_multi(request):
 #
 #     return Response()
 
-
-
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def student_addAll(request):
@@ -971,9 +868,11 @@ def student_addAll(request):
 
 
 
-    # df = df.drop(['No'],axis=1)
+    #df = df.drop(['No'],axis=1)
+    print("df")
     print(df)
     school_id_list = list(set(df['School ID']))
+    print("school_id list")
     print(school_id_list)
     df = df.rename({})
     for school_id in school_id_list:
@@ -982,11 +881,14 @@ def student_addAll(request):
 
         df['School ID'] = df['School ID'].apply(lambda x:school_fk['id'] if x==school_id else x)
 
+    print("test 지점")
 
-    df.columns = ['school_fk','student_id',
+    df.columns = ['school_fk','student_id','student_name',
                   'grade','grade_class','student_number','date_of_birth',
                   'gender','medical_insurance_number','village','contact','parents_name']
     df = df.replace(np.NAN,'')
+    df['gender'] = df['gender'].replace({'Nam': 'm', 'Nữ': 'f'})
+    print("df test 22")
     print(df)
 
     bulk_list = []
@@ -1001,29 +903,18 @@ def student_addAll(request):
             #student.k = df.values[i][j]
             if k =='date_of_birth':
                 data[k] = datetime.datetime.strptime(df.values[i][j],"%Y-%m-%d").date()
+
             else:
                 data[k] = df.values[i][j]
+        if data['medical_insurance_number'] not in list(Student.objects.values_list('medical_insurance_number', flat=True)):
+            student_obj = AddStudentSerializer(data=data,partial=True)
 
-        student_obj = AddStudentSerializer(data=data,partial=True)
-
-        if student_obj.is_valid():
-            student_obj.save()
-        else:
-            print(student_obj.errors)
+            if student_obj.is_valid():
+                student_obj.save()
+            else:
+                print(student_obj.errors)
 
 
-        #     print(student_obj.validated_data)
-        #     student = Student()
-        #     for key,value in student_obj.validated_data.items():
-        #         student.key = value
-        #
-        #     bulk_list.append(student)
-
-        #print(bulk_list)
-
-    # print(bulk_list)
-    # with transaction.atomic():
-    #     Student.objects.bulk_create(bulk_list)
 
 
     log(request,typ='Upload Student',
@@ -1032,4 +923,3 @@ def student_addAll(request):
     res['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_201_CREATED)
-

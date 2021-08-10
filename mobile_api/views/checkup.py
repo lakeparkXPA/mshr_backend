@@ -71,7 +71,6 @@ def edit_item(request):
         instance = Checkup.objects.select_related('student_fk') \
             .filter(student_fk__medical_insurance_number=request['min']
                     , date=datetime.datetime.today().strftime("%Y-%m-%d")).get()
-        print("test")
 
     else:
         instance = Checkup()
@@ -82,7 +81,10 @@ def edit_item(request):
 
     if checkup_serializer.is_valid():
         checkup_serializer.save()
-
+    else:
+        header = {}
+        header['HTTP_X_CSTATUS'] = 0
+        return Response(headers=header, status=HTTP_201_CREATED)
 
     header = {}
     header['HTTP_X_CSTATUS'] = 0

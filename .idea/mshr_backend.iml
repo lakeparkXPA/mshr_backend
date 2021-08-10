@@ -16,6 +16,7 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="Remote Python 3.6.9 (sftp://ubuntu@18.141.253.15:22/usr/bin/python3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="checkup_backend" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="PLAIN" />

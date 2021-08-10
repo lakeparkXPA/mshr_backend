@@ -1,10 +1,10 @@
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import FileResponse, JsonResponse
 import datetime
 from rest_framework.decorators import *
 
 from rest_framework.status import *
-from django.db.models import Count
+from django.db.models import Count, Avg
 from admin_api.permissions import *
 from admin_api.serializers import *
 
@@ -27,7 +27,7 @@ def dashboard_info(request):
     province = request.get('province','')
     district = request.get('district','')
     commune = request.get('commune','')
-    school_id = request.get('school_id','')
+    school_pk = request.get('school_pk','')
     start_date = request.get('start_date','')
     end_date = request.get('end_date','')
 
@@ -46,8 +46,7 @@ def dashboard_info(request):
         q.add(Q(student_fk__school_fk__area_fk__district_fk__district=district),q.AND)
     if commune:
         q.add(Q(student_fk__school_fk__area_fk__commune_clinic_fk__commune_clinic=commune),q.AND)
-    if school_id:
-        school_pk = School.objects.get(school_id=school_id)
+    if school_pk:
         q.add(Q(student_fk__school_fk__id=school_pk),q.AND)
 
     if start_date and end_date:
@@ -92,27 +91,20 @@ def dashboard_info(request):
 
 
     """hc_grade"""
-
+    hc_grade = checkup_set.values(grade=F('student_fk__grade'), gender=F('student_fk__gender')).annotate(cnt=Count('gender')).order_by('grade', 'gender')
     grade = {}
-
-
-    for i in range(1,10):
-        gender = {}
-        gender["male"] = 0
-        gender["female"] = 0
-        grade["grade_{}".format(i)] = gender
-
-
-    for checkup in checkup_set:
-        student = checkup.student_fk
-
-        if student.gender == 'Nam':
-            grade["grade_{}".format(student.grade)]["male"]+=1
-        elif student.gender =='Nữ':
-            grade["grade_{}".format(student.grade)]["female"] += 1
+    for row in hc_grade:
+        if row['grade'] not in grade:
+            grade[row['grade']] = {row['gender']: row['cnt']}
+        else:
+            grade[row['grade']][row['gender']] = row['cnt']
+    for row in hc_grade:
+        if 'm' not in grade[row['grade']].keys():
+            grade[row['grade']]['m'] = 0
+        elif 'f' not in grade[row['grade']].keys():
+            grade[row['grade']]['f'] = 0
 
     data['hc_grade'] = grade
-    print(grade)
 
 
     """hc_item"""
@@ -133,89 +125,37 @@ def dashboard_info(request):
     """average weight"""
     print("weight test 시작")
     weight = {}
-    temp = {}
 
-    for i in range(1,10):
-        gender = {}
+    average_weight = checkup_set.values(grade=F('student_fk__grade'), gender=F('student_fk__gender')).exclude(weight__isnull=True).annotate(avg=Avg('weight')).order_by('grade', 'gender')
+    for row in average_weight:
+        if row['grade'] not in weight:
+            weight[row['grade']] = {row['gender']: row['avg']}
+        else:
+            weight[row['grade']][row['gender']] = row['avg']
 
-        gender["male"] = 0
-        gender["female"] = 0
-        weight["grade_{}".format(i)] = gender
+    for row in average_weight:
+        if 'm' not in weight[row['grade']].keys():
+            weight[row['grade']]['m'] = 0
+        elif 'f' not in weight[row['grade']].keys():
+            weight[row['grade']]['f'] = 0
 
-
-        sum = {}
-        sum["male"] = {"total":0,"count":0}
-        sum["female"] = {"total": 0, "count": 0}
-
-        temp["grade_{}".format(i)] = sum
-
-
-
-
-    for checkup in checkup_set:
-        student = checkup.student_fk
-
-        if student.gender == 'Nam' and checkup.weight != None:
-            temp["grade_{}".format(student.grade)]["male"]["total"]+=checkup.weight
-            temp["grade_{}".format(student.grade)]["male"]["count"]+=1
-            #weight["grade_{}".format(student.grade)]["male"]+=checkup.weight
-        elif student.gender =='Nữ' and checkup.weight != None:
-
-            temp["grade_{}".format(student.grade)]["female"]["total"] += checkup.weight
-            temp["grade_{}".format(student.grade)]["female"]["count"] += 1
-            #weight["grade_{}".format(student.grade)]["female"] +=checkup.weight
-
-    for i in range(1,10):
-        if temp["grade_{}".format(i)]["male"]["count"] !=0:
-            weight["grade_{}".format(i)]["male"] =(temp["grade_{}".format(i)]["male"]["total"])/(temp["grade_{}".format(i)]["male"]["count"])
-        if temp["grade_{}".format(i)]["female"]["count"] !=0:
-            weight["grade_{}".format(i)]["female"]= (temp["grade_{}".format(i)]["female"]["total"]) / (temp["grade_{}".format(i)]["female"]["count"])
-
-    print("weight")
-    print(weight)
     data['average_weight'] = weight
 
     """average height"""
 
     height = {}
-    temp = {}
-
-    for i in range(1, 10):
-        gender = {}
-
-        gender["male"] = 0
-        gender["female"] = 0
-        height["grade_{}".format(i)] = gender
-
-        sum = {}
-        sum["male"] = {"total": 0, "count": 0}
-        sum["female"] = {"total": 0, "count": 0}
-
-        temp["grade_{}".format(i)] = sum
-
-    for checkup in checkup_set:
-        student = checkup.student_fk
-
-        if student.gender == 'Nam' and checkup.height != None:
-            temp["grade_{}".format(student.grade)]["male"]["total"] += checkup.height
-            temp["grade_{}".format(student.grade)]["male"]["count"] += 1
-            # weight["grade_{}".format(student.grade)]["male"]+=checkup.weight
-
-        elif student.gender == 'Nữ' and checkup.height != None:
-            temp["grade_{}".format(student.grade)]["female"]["total"] += checkup.height
-            temp["grade_{}".format(student.grade)]["female"]["count"] += 1
-            # weight["grade_{}".format(student.grade)]["female"] +=checkup.weight
-
-    for i in range(1, 10):
-        if temp["grade_{}".format(i)]["male"]["count"] != 0:
-            height["grade_{}".format(i)]["male"] = (temp["grade_{}".format(i)]["male"]["total"]) / (
-            temp["grade_{}".format(i)]["male"]["count"])
-        if temp["grade_{}".format(i)]["female"]["count"] != 0:
-            height["grade_{}".format(i)]["female"] = (temp["grade_{}".format(i)]["female"]["total"]) / (
-            temp["grade_{}".format(i)]["female"]["count"])
-
-    print("height")
-    print(height)
+    average_height = checkup_set.values(grade=F('student_fk__grade'), gender=F('student_fk__gender')).\
+        exclude(height__isnull=True).annotate(avg=Avg('height')).order_by('grade', 'gender')
+    for row in average_height:
+        if row['grade'] not in height:
+            height[row['grade']] = {row['gender']: row['avg']}
+        else:
+            height[row['grade']][row['gender']] = row['avg']
+    for row in average_height:
+        if 'm' not in height[row['grade']].keys():
+            height[row['grade']]['m'] = 0
+        elif 'f' not in height[row['grade']].keys():
+            height[row['grade']]['f'] = 0
     data['average_height'] = height
     #print(connection.queries)
 
@@ -223,30 +163,16 @@ def dashboard_info(request):
 
     grade_hc_items = {}
 
+    grade_hc = checkup_set.values(grade=F('student_fk__grade')).\
+        exclude(height__isnull=True,weight__isnull=True, vision_left__isnull=True, vision_right__isnull=True,
+                hearing__isnull=True, systolic__isnull=True, diastolic__isnull=True, bust__isnull=True,
+                dental__isnull=True)\
+        .annotate(weight=Count('weight'), height=Count('height'), vision=Count('vision_left'), hearing=Count('hearing'),
+                  bp=Count('systolic'), chest=Count('bust'), dental=Count('dental')).order_by('grade')
+    for row in grade_hc:
+        grade = row.pop('grade')
+        grade_hc_items[grade] = row
 
-    check_list = {"height":0,"weight":0,"vision":0,"hearing":0,"bp":0,"chest":0,"dental":0}
-
-    for i in range(1,10):
-        grade_hc_items["grade_{}".format(i)] = check_list
-
-
-    for checkup in checkup_set:
-        student = checkup.student_fk
-        if checkup.weight != None:
-            grade_hc_items["grade_{}".format(student.grade)]["weight"]+=1
-
-        if checkup.height != None:
-            grade_hc_items["grade_{}".format(student.grade)]["height"] += 1
-        if checkup.vision_left != None and checkup.vision_right != None:
-            grade_hc_items["grade_{}".format(student.grade)]["vision"] += 1
-
-        if checkup.hearing != None:
-            grade_hc_items["grade_{}".format(student.grade)]["hearing"]+=1
-
-        if checkup.systolic != None and checkup.diastolic != None:
-            grade_hc_items["grade_{}".format(student.grade)]["bp"] += 1
-        if checkup.bust != None:
-            grade_hc_items["grade_{}".format(student.grade)]["chest"] += 1
 
     data["grade_hc_items"] = grade_hc_items
 
@@ -381,7 +307,7 @@ def dashboard_filter(request):
             school_info = {}
 
             school_info['school_name'] = obj['school_name']
-            school_info['school_id'] =obj['school_id']
+            school_info['school_id'] =obj['pk']
 
             data['schools'].append(school_info)
 

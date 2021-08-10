@@ -260,6 +260,7 @@ class CheckUpListSerializer(serializers.ModelSerializer):
             birth_year = datetime.datetime.strptime(student['date_of_birth'], "%Y-%m-%d").year
             cur_year = datetime.datetime.today().year
             data['age'] = cur_year - birth_year + 1
+            data['village'] = student['village']
 
 
             if data['height'] == -1 or data['weight'] == -1:
@@ -268,6 +269,7 @@ class CheckUpListSerializer(serializers.ModelSerializer):
                 height_m = data['height'] / 100
                 data['bmi'] = round(data['weight'] / (height_m ** 2), 2)
             data['hc_year'] = data['date'][0:4]
+            data['diatolic'] = data['diatolic']
 
         data.pop('graduate_fk')
         data.pop('checked')
@@ -307,19 +309,19 @@ class CheckUpDownSerializer(serializers.ModelSerializer):
             total_data.update(data)
 
 
-        birth_year =datetime.datetime.strptime(total_data['date_of_birth'],"%Y-%m-%d").year
-        cur_year = datetime.datetime.today().year
-        total_data['age'] = cur_year-birth_year+1
-        if total_data['height'] == '' or total_data['weight'] == '':
-            total_data['bmi'] = 0
-        else:
-            height_m = total_data['height']/100
-            total_data['bmi'] = round(total_data['weight'] / (height_m**2),2)
+            birth_year =datetime.datetime.strptime(total_data['date_of_birth'],"%Y-%m-%d").year
+            cur_year = datetime.datetime.today().year
+            total_data['age'] = cur_year-birth_year+1
+            if total_data['height'] == '' or total_data['weight'] == '':
+                total_data['bmi'] = 0
+            else:
+                height_m = total_data['height']/100
+                total_data['bmi'] = round(total_data['weight'] / (height_m**2),2)
 
-        total_data.pop('graduate_fk')
-        total_data.pop('checked')
-        total_data.pop('id')
-        total_data.pop('student_fk')
+            total_data.pop('graduate_fk')
+            total_data.pop('checked')
+            total_data.pop('id')
+            total_data.pop('student_fk')
         return total_data
 
 
@@ -348,6 +350,8 @@ class CheckUpGetSerializier(serializers.ModelSerializer):
             student = AddStudentSerializer(instance.student_fk).data
             school_name = School.objects.get(id=student['school_fk']).school_name
             print(school_name)
+            print(data['height'])
+            print(type(data['height']))
             data['grade'] = student['grade']
             data['grade_class'] = student['grade_class']
             data['student_number'] = student['student_number']
@@ -360,7 +364,7 @@ class CheckUpGetSerializier(serializers.ModelSerializer):
             data['student_name'] = student['student_name']
             data['school_name'] = school_name
 
-            if data['height'] == None or data['weight'] == None:
+            if not data['height'] or not data['weight']:
                 data['bmi'] = 0
             else:
                 height_m = data['height'] / 100
@@ -418,3 +422,5 @@ class NoticeGetSerializer(serializers.ModelSerializer):
 
 
         return data
+
+

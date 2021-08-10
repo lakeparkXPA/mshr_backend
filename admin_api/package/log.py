@@ -1,5 +1,4 @@
 from admin_api.models import *
-import datetime
 from django.utils import timezone
 def log(request, typ, content):
     """

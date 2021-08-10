@@ -20,10 +20,12 @@ def file_upload_path(instance,filename):
 
     return folder
 
+
 def notice_upload_path(instance, filename):
     instance = model_to_dict(instance)
     folder = '/'.join(['notice', str(instance['notice_fk']), filename])
     return folder
+
 
 class Area(models.Model):
     area_id = models.AutoField(primary_key=True)

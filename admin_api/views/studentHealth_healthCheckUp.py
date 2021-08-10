@@ -16,17 +16,20 @@ from django.db import connection
 import pandas as pd
 import json
 from django.db import transaction
+import numpy as np
 
 
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def list(request):
-
+    user_id = request.META.get('HTTP_USER_ID', '')
     """체크업 리스트 조회 API"""
     request = json.loads(request.body)
 
-
+    province = request.get('province', '')
+    district = request.get('district', '')
+    commune = request.get('commune', '')
     school_id = request.get('school_id','')
     start_date = request.get('start_date','')
     end_date = request.get('end_date','')
@@ -34,7 +37,7 @@ def list(request):
     grade = request.get('grade','')
     name = request.get('name','')
 
-    data = {}
+
     header = {}
 
     if start_date and end_date:
@@ -50,12 +53,32 @@ def list(request):
     q = Q()
     if school_id:
         q.add(Q(student_fk__school_fk=school_id),q.AND)
+    else:
+        user_level = User.objects.get(user_id__iexact=user_id).user_level
+
+        if user_level == 0:
+            pass
+        elif user_level == 1:
+            area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.province_fk
+            area_id = Area.objects.filter(Q(province_fk__exact=area)).values('area_id')
+            school_id = School.objects.filter(area_fk__in=area_id).values('id')
+            q.add(Q(student_fk__school_fk__in=school_id), q.AND)
+        else:
+            area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.district_fk
+            area_id = Area.objects.filter(Q(district_fk__exact=area)).values('area_id')
+            school_id = School.objects.filter(area_fk__in=area_id).values('id')
+            q.add(Q(student_fk__school_fk__in=school_id), q.AND)
 
     if grade and grade != 0:
         q.add(Q(student_fk__grade=grade),q.AND)
+    if province:
+        q.add(Q(student_fk__school_fk__area_fk__province_fk__province=province),q.AND)
+    if district:
+        q.add(Q(student_fk__school_fk__area_fk__district_fk__district=district),q.AND)
+    if commune:
+        q.add(Q(student_fk__school_fk__area_fk__commune_clinic_fk__commune_clinic=commune),q.AND)
 
-    #
-    if checked ==1 or checked ==0:
+    if checked == 1 or checked == 0:
         q.add(Q(checked=checked),Q.AND)
 
     if name:
@@ -189,6 +212,7 @@ def addCheckUp(request):
 def modiCheckUp(request):
     """체크업 수정 api"""
 
+    print("checkup수정")
     request_json = json.loads(request.body)
 
     checkup_data = request_json.get('info','')
@@ -240,7 +264,7 @@ def getCheckUp(request):
 
     data ={}
     header = {}
-
+    print(checkup_id)
     if checkup_id:
         try:
             checkup_obj = Checkup.objects.select_related('student_fk')\
@@ -253,7 +277,6 @@ def getCheckUp(request):
         except:
             #data['status']= 1
             print("Does not exist checkup.")
-
             header['HTTP_X_CSTATUS'] = 1
             return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
@@ -269,6 +292,7 @@ def getCheckUp(request):
 
 
     header['HTTP_X_CSTATUS'] = 0
+    print(data)
     return Response(data,headers=header,status=HTTP_200_OK)
 
 
@@ -330,7 +354,7 @@ def delChekUpMulti(request):
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def CheckUpDownList(request):
-
+    user_id = request.META.get('HTTP_USER_ID', '')
     """체크업 리스트 다운로드 API"""
     request_json = json.loads(request.body)
 
@@ -357,7 +381,22 @@ def CheckUpDownList(request):
 
     q = Q()
     if school_id:
-        q.add(Q(student_fk__school_fk=school_id),q.AND)
+        q.add(Q(student_fk__school_fk=school_id), q.AND)
+    else:
+        user_level = User.objects.get(user_id__iexact=user_id).user_level
+
+        if user_level == 0:
+            pass
+        elif user_level == 1:
+            area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.province_fk
+            area_id = Area.objects.filter(Q(province_fk__exact=area)).values('area_id')
+            school_id = School.objects.filter(area_fk__in=area_id).id
+            q.add(Q(student_fk__school_fk=school_id), q.AND)
+        else:
+            area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.district_fk
+            area_id = Area.objects.filter(Q(district_fk__exact=area)).values('area_id')
+            school_id = School.objects.filter(area_fk__in=area_id).id
+            q.add(Q(student_fk__school_fk=school_id), q.AND)
 
     if grade and grade != 0:
         q.add(Q(student_fk__grade=grade),q.AND)
@@ -384,7 +423,12 @@ def CheckUpDownList(request):
 
 
     checkup_serializer = CheckUpDownSerializer(checkup,many=True).data
-
+    checkup_serializer = checkup_serializer.values('school_id','school_name','student_name',
+               'grade','class','student_number','medical_insurance_number','date_of_birth','age',
+                  'gender','height','weight','vision_left',
+               'vision_right','glasses','corrected_left',
+               'corrected_right','dental','hearing',
+               'systolic','diastolic','bust','date','bmi')
 
     #print(checkup_serializer)
 
@@ -412,11 +456,11 @@ def CheckUpDownList(request):
     font_style.font.bold = True
 
     columns = ['School ID','School Name','Student Name',
-               'Grade','Class','Student Number','MIN','Date Of Birth',
+               'Grade','Class','Student Number','MIN','Date Of Birth','Age',
                   'Gender','Height','Weight','Vision left',
                'Vision right','Glasses','Corrected left',
                'Corrected right','Dental','Hearing',
-               'Systolic','Diastolic','Bust','Date','Age','Bmi']
+               'Systolic','Diastolic','Bust','Date','Bmi']
 
     for idx,col_name in enumerate(columns):
         #print(row_num,idx,col_name,font_style)
@@ -441,3 +485,51 @@ def CheckUpDownList(request):
     #return Response(checkup_serializer,headers=header,status=HTTP_200_OK)
 
 
+
+
+
+@api_view(['POST'])
+@permission_classes([AllAuthenticated])
+def addCheckUps(request):
+    """빈 체크업 등록 페이지"""
+
+    request_json = json.loads(request.body)
+
+    student_id_lst = request_json.get('student_id_lst', '')
+
+    data = {}
+    header = {}
+    """같은날 체크업은 1개만 등록"""
+    for student_id in student_id_lst:
+        if student_id == '':
+            header['HTTP_X_CSTATUS'] = 1
+            return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+
+        else:
+
+            """체크업은 개인당 하루에 최대 1개"""
+            if Checkup.objects \
+                    .filter(student_fk=student_id,
+                            date=datetime.datetime.today().strftime("%Y-%m-%d")) \
+                    .exists():
+                header['HTTP_X_CSTATUS'] = 2
+                return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+
+            try:
+                student = Student.objects.get(student_id=student_id)
+
+            except:
+                header['HTTP_X_CSTATUS'] = 1
+                return Response(headers=header, status=HTTP_400_BAD_REQUEST)
+
+            checkup = Checkup(student_fk=student, date=datetime.datetime.today().strftime("%Y-%m-%d"))
+
+            checkup.save()
+
+    log(request, typ='Add Health Check-up list',
+        content='Insert Health Check-up list ' +
+                request.META.get('HTTP_USER_ID', ''))
+    # data['status']=0
+    header['HTTP_X_CSTATUS'] = 0
+
+    return Response(data, headers=header, status=HTTP_201_CREATED)

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework import permissions, generics
 from django.http import FileResponse
+from django.utils import timezone
 
 from admin_api.package.log import log
 from admin_api.permissions import *
@@ -26,18 +27,8 @@ def notice_lst(request):
 
         search = request.data['search']
 
-        user_level = User.objects.get(user_id__exact=user_id).user_level
+        notice_filter = Notice.objects.values('notice_id', 'title', 'create_time', 'user_name')
 
-        if user_level == 0:
-            notice_filter = Notice.objects.values('notice_id', 'title', 'create_time', 'user_name')
-        elif user_level == 1:
-            area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.province_fk
-            area_id = Area.objects.filter(province_fk__exact=area).values('area_id')
-            user = User.objects.filter(area_fk__in=area_id).values('user_id')
-            notice_filter = Notice.objects.filter(user_fk__exact=user).values('notice_id', 'title',
-                                                                              'create_time', 'user_name')
-        else:
-            raise PermissionError(2)
 
 
         if search:
@@ -49,6 +40,7 @@ def notice_lst(request):
         #print(notice)
         #print(notice[0])
         notice_data = NoticeGetSerializer(notice,many=True).data
+
 
 
 
@@ -67,7 +59,7 @@ def notice_lst(request):
 class NoticeFileUpload(generics.CreateAPIView):
     queryset = NoticeFile.objects.all()
     serializer_class = FileUploadSerializer
-    permission_classes = (AllAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
     def create(self, request, *args, **kwargs):
         try:
             notice_pk = request.POST.get('notice_fk')
@@ -78,7 +70,10 @@ class NoticeFileUpload(generics.CreateAPIView):
 
             if file_serializer.is_valid():
                 if req_type == 'edit':
-                    os.remove(str(NoticeFile.objects.get(notice_fk__exact=notice_pk)))
+                    try:
+                        os.remove(str(NoticeFile.objects.get(notice_fk__exact=notice_pk)))
+                    except:
+                        pass
                 file_serializer.save()
             else:
                 raise ValueError(3)
@@ -107,21 +102,23 @@ def notice_add(request):
     notice.user_name = user_name
     notice.user_fk = user_fk
     notice.field = contents
+    notice.create_time = timezone.localtime()
 
     notice.save()
 
     if request.FILES.getlist('attachments'):
         notice_return = {'notice_fk': notice.notice_id, 'req_type': 'add'}
         notice_data = {'attachments': request.FILES.get('attachments')}
-
         response = requests.post('https://api.vnschoolhealth.net/admin_api/management/notice/upload/',
                                  files=notice_data, data=notice_return)
         try:
             res = Response(status=HTTP_200_OK)
             res['HTTP_X_CSTATUS'] = response.headers['HTTP_X_CSTATUS']
             return res
+
         except:
             pass
+
     log(request, typ='Add Notice', content='Insert Notice ' + user_id)
 
     res = Response(status=HTTP_200_OK)
@@ -137,7 +134,7 @@ def notice_detail(request):
         notice_id = request.GET.get('notice_id')
 
         if not notice_id:
-            ValueError(4)
+            raise ValueError(4)
 
         notice_select = Notice.objects.prefetch_related('noticefile_set').filter(notice_id__exact=notice_id).\
             extra(select={'file_name': "coalesce(file_name, '')"}).values(
@@ -159,7 +156,7 @@ def notice_file(request):
     try:
         notice_id = request.GET.get('notice_id')
         if not notice_id:
-            ValueError(4)
+            raise ValueError(4)
 
         file = NoticeFile.objects.get(notice_fk__exact=notice_id).file_name
 
@@ -192,27 +189,32 @@ def notice_edit(request):
             notice.user_name = user_name
             notice.user_fk = user_fk
             notice.field = contents
+            notice.create_time = timezone.localtime()
 
             notice.save()
         except:
             ValueError(4)
-
+        res = Response(status=HTTP_200_OK)
+        res['HTTP_X_CSTATUS'] = 0
         if request.FILES.getlist('attachments'):
             notice_return = {'notice_fk': notice.notice_id, 'req_type': 'edit'}
             notice_data = {'attachments': request.FILES.get('attachments')}
 
-            file_old_pk = NoticeFile.objects.get(notice_fk__exact=notice.notice_id).id
+            try:
+                file_old_pk = NoticeFile.objects.get(notice_fk__exact=notice.notice_id).id
 
-            requests.post('https://api.vnschoolhealth.net/admin_api/management/notice/upload/',
-                          files=notice_data, data=notice_return)
+                requests.post('https://api.vnschoolhealth.net/admin_api/management/notice/upload/',
+                              files=notice_data, data=notice_return)
+                NoticeFile.objects.get(id=file_old_pk).delete()
+            except:
+                requests.post('https://api.vnschoolhealth.net/admin_api/management/notice/upload/',
+                              files=notice_data, data=notice_return)
+            res['HTTP_X_CSTATUS'] = 54321
 
-            NoticeFile.objects.get(id=file_old_pk).delete()
 
-        # TODO---- Enable block later
-        # log(request, typ='Add school', content='Insert school ' + school_id)
+        log(request, typ='Edit Notice', content='Edit Notice ' + user_id)
 
-        res = Response(status=HTTP_200_OK)
-        res['HTTP_X_CSTATUS'] = 0
+
         return res
 
     except Exception as e:
@@ -240,8 +242,7 @@ def notice_remove(request, pk):
         except:
             ValueError(4)
 
-        # TODO---- Enable block later
-        # log(request, typ='Delete school', content='Delete school ' + str(pk))
+        log(request, typ='Delete Notice', content='Delete Notice ' + request.META.get('HTTP_USER_ID', ''))
         res = Response(status=HTTP_200_OK)
         res['HTTP_X_CSTATUS'] = 0
         return res

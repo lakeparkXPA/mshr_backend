@@ -27,20 +27,19 @@ def student_add(request):
     student_data = json.loads(request.body)
 
 
-    data = {}
     header = {}
 
     """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
     if Student.objects\
             .filter(medical_insurance_number=student_data['medical_insurance_number'])\
-            .exists() or \
-            Graduate.objects.\
-                    filter(medical_insurance_number=student_data['medical_insurance_number'])\
-                    .exists():
+            .exists():
 
         header['HTTP_X_CSTATUS'] = 1
         return Response(headers=header,status=HTTP_409_CONFLICT)
 
+    school_id = student_data['school_id']
+    school_pk = School.objects.get(school_id=school_id).id
+    student_data['school_fk'] = school_pk
 
     student_obj = AddStudentSerializer(data=student_data,partial=True)
     if student_obj.is_valid():
@@ -66,12 +65,16 @@ def students_add(request):
 
 
     for student in student_data:
-        student_obj = AddStudentSerializer(data=student,partial=True)
+        school_id = student['school_id']
+        school_pk = School.objects.get(school_id=school_id).id
+        student['school_fk'] = school_pk
+        if not Student.objects.filter(medical_insurance_number=student['medical_insurance_number']).exists():
+            student_obj = AddStudentSerializer(data=student,partial=True)
 
-        if student_obj.is_valid():
-            student_obj.save()
-        else:
-            print(student_obj.errors)
+            if student_obj.is_valid():
+                student_obj.save()
+            else:
+                print(student_obj.errors)
 
     header['HTTP_X_CSTATUS'] = 0
     return Response(headers=header,status=HTTP_201_CREATED)
@@ -95,12 +98,7 @@ def min_check(request):
 
 
     """학생뿐만 아니라 졸업생역시 min이 중복되는지여부 체크해야함."""
-    if Student.objects\
-            .filter(medical_insurance_number=min)\
-            .exists() or \
-            Graduate.objects.\
-                    filter(medical_insurance_number=min)\
-                    .exists():
+    if Student.objects.filter(medical_insurance_number=min).exists():
         data['check'] = False
     else:
         data['check'] = True
