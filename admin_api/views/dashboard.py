@@ -94,15 +94,22 @@ def dashboard_info(request):
     hc_grade = checkup_set.values(grade=F('student_fk__grade'), gender=F('student_fk__gender')).annotate(cnt=Count('gender')).order_by('grade', 'gender')
     grade = {}
     for row in hc_grade:
-        if row['grade'] not in grade:
-            grade[row['grade']] = {row['gender']: row['cnt']}
-        else:
-            grade[row['grade']][row['gender']] = row['cnt']
-    for row in hc_grade:
-        if 'm' not in grade[row['grade']].keys():
-            grade[row['grade']]['m'] = 0
-        elif 'f' not in grade[row['grade']].keys():
-            grade[row['grade']]['f'] = 0
+        if row['grade'] >= 6 and row['grade'] <= 9:
+            if row['grade'] not in grade:
+                grade[row['grade']] = {row['gender']: row['cnt']}
+            else:
+                grade[row['grade']][row['gender']] = row['cnt']
+    for index in range(6, 10):
+        if index not in grade:
+            grade[index] = {}
+            grade[index]['m'] = 0
+            grade[index]['f'] = 0
+
+    for row in grade:
+        if 'm' not in grade[row]:
+            grade[row]['m'] = 0
+        elif 'f' not in grade[row]:
+            grade[row]['f'] = 0
 
     data['hc_grade'] = grade
 
@@ -128,16 +135,22 @@ def dashboard_info(request):
 
     average_weight = checkup_set.values(grade=F('student_fk__grade'), gender=F('student_fk__gender')).exclude(weight__isnull=True).annotate(avg=Avg('weight')).order_by('grade', 'gender')
     for row in average_weight:
-        if row['grade'] not in weight:
-            weight[row['grade']] = {row['gender']: row['avg']}
-        else:
-            weight[row['grade']][row['gender']] = row['avg']
+        if row['grade'] >= 6 and row['grade'] <= 9:
+            if row['grade'] not in weight:
+                weight[row['grade']] = {row['gender']: row['avg']}
+            else:
+                weight[row['grade']][row['gender']] = row['avg']
+    for index in range(6, 10):
+        if index not in weight:
+            weight[index] = {}
+            weight[index]['m'] = 0
+            weight[index]['f'] = 0
 
-    for row in average_weight:
-        if 'm' not in weight[row['grade']].keys():
-            weight[row['grade']]['m'] = 0
-        elif 'f' not in weight[row['grade']].keys():
-            weight[row['grade']]['f'] = 0
+    for row in weight:
+        if 'm' not in weight[row]:
+            weight[row]['m'] = 0
+        elif 'f' not in weight[row]:
+            weight[row]['f'] = 0
 
     data['average_weight'] = weight
 
@@ -147,15 +160,23 @@ def dashboard_info(request):
     average_height = checkup_set.values(grade=F('student_fk__grade'), gender=F('student_fk__gender')).\
         exclude(height__isnull=True).annotate(avg=Avg('height')).order_by('grade', 'gender')
     for row in average_height:
-        if row['grade'] not in height:
-            height[row['grade']] = {row['gender']: row['avg']}
-        else:
-            height[row['grade']][row['gender']] = row['avg']
-    for row in average_height:
-        if 'm' not in height[row['grade']].keys():
-            height[row['grade']]['m'] = 0
-        elif 'f' not in height[row['grade']].keys():
-            height[row['grade']]['f'] = 0
+        if row['grade'] >= 6 and row['grade'] <= 9:
+            if row['grade'] not in height:
+                height[row['grade']] = {row['gender']: row['avg']}
+            else:
+                height[row['grade']][row['gender']] = row['avg']
+    for index in range(6, 10):
+        if index not in height:
+            height[index] = {}
+            height[index]['m'] = 0
+            height[index]['f'] = 0
+
+    for row in height:
+        if 'm' not in height[row]:
+            height[row]['m'] = 0
+        elif 'f' not in height[row]:
+            height[row]['f'] = 0
+
     data['average_height'] = height
     #print(connection.queries)
 
@@ -171,8 +192,18 @@ def dashboard_info(request):
                   bp=Count('systolic'), chest=Count('bust'), dental=Count('dental')).order_by('grade')
     for row in grade_hc:
         grade = row.pop('grade')
-        grade_hc_items[grade] = row
-
+        if grade >= 6 and grade <= 9:
+            grade_hc_items[grade] = row
+    for index in range(6, 10):
+        if index not in grade_hc_items:
+            grade_hc_items[index] = {}
+            grade_hc_items[index]['weight'] = 0
+            grade_hc_items[index]['height'] = 0
+            grade_hc_items[index]['vision'] = 0
+            grade_hc_items[index]['hearing'] = 0
+            grade_hc_items[index]['bp'] = 0
+            grade_hc_items[index]['chest'] = 0
+            grade_hc_items[index]['dental'] = 0
 
     data["grade_hc_items"] = grade_hc_items
 

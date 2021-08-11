@@ -130,3 +130,8 @@ import requests
 # request = factory.get(url + url_pls, HTTP_USER_ID='test1', format="json",)
 # print(url_pls)
 # print(request.content)
+
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mshr_backend.settings")
+import django
+django.setup()

@@ -89,10 +89,10 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ['school_fk','student_id','student_name','date_of_birth',
-                  'gender','grade','grade_class','medical_insurance_number']
+                  'gender','grade','grade_class','medical_insurance_number','village']
     def to_representation(self, instance):
         field_list = ('school_fk','student_id','student_name','date_of_birth',
-                  'gender','grade','grade_class','medical_insurance_number')
+                  'gender','grade','grade_class','medical_insurance_number', 'village')
 
         data = super().to_representation(instance)
         for field in field_list:
@@ -269,7 +269,7 @@ class CheckUpListSerializer(serializers.ModelSerializer):
                 height_m = data['height'] / 100
                 data['bmi'] = round(data['weight'] / (height_m ** 2), 2)
             data['hc_year'] = data['date'][0:4]
-            data['diatolic'] = data['diatolic']
+            data['diastolic'] = data['diastolic']
 
         data.pop('graduate_fk')
         data.pop('checked')

@@ -265,11 +265,8 @@ def student_listDownload(request):
     for idx, col_name in enumerate(columns):
         ws.write(row_num,idx,col_name,font_style)
 
-    student_list = students_obj.values('student_id', 'student_name','grade', 'grade_class', 'student_number',
-                                       'date_of_birth', 'gender', 'medical_insurance_number', 'village', 'contact',
-                                       'parents_name', school_id=F('school_fk__school_id'),
-                                       school_name=F('school_fk__school_name')).\
-        values('student_id', 'student_name', 'school_id', 'school_name','grade', 'grade_class', 'student_number',
+    student_list = students_obj.annotate(school_id=F('school_fk__school_id'), school_name=F('school_fk__school_name')).\
+        values_list('student_id', 'student_name', 'school_id', 'school_name','grade', 'grade_class', 'student_number',
                'date_of_birth', 'gender', 'medical_insurance_number', 'village', 'contact','parents_name')
 
     if len(student_list) == 1:
@@ -278,7 +275,7 @@ def student_listDownload(request):
         data_students = student_list
     for row in data_students:
         row_num+=1
-        for col,value in enumerate(row.values()):
+        for col,value in enumerate(row):
             ws.write(row_num,col,value)
 
 
