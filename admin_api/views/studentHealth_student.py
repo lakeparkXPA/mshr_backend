@@ -473,13 +473,14 @@ def student_get(request,student_id):
     if student_id is None:
         #data['status'] = 1
         header['HTTP_X_CSTATUS'] = 1
-        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+        return Response(headers=header, status=HTTP_400_BAD_REQUEST)
 
 
 
     student_obj = Student.objects.select_related('school_fk').filter(student_id=student_id).\
         values('student_name', 'grade', 'grade_class', 'gender', 'date_of_birth', 'student_number', 'village', 'contact',
-               'parents_name', 'school_fk__school_name')
+               'parents_name', 'medical_insurance_number', school_id=F('school_fk__school_id'),
+               school_name=F('school_fk__school_name'))
 
     #print(student_serializer)
 
