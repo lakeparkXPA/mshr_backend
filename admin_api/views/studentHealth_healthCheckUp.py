@@ -78,7 +78,7 @@ def list(request):
     if commune:
         q.add(Q(student_fk__school_fk__area_fk__commune_clinic_fk__commune_clinic=commune),q.AND)
 
-    if checked == 1 or checked == 0:
+    if checked == 1:
         q.add(Q(checked=checked),Q.AND)
 
     if name:
@@ -365,6 +365,10 @@ def CheckUpDownList(request):
     checked = request_json.get('checked','')
     grade = request_json.get('grade','')
     name = request_json.get('name','')
+    province = request_json.get('province')
+    district = request_json.get('district')
+    commune = request_json.get('commune')
+
 
     data = {}
     header = {}
@@ -380,6 +384,20 @@ def CheckUpDownList(request):
 
 
     q = Q()
+
+    if province:
+        qa = Q()
+        province_id = Province.objects.get(province=province).province_id
+        qa.add(Q(province_fk=province_id), qa.AND)
+        if district:
+            district_id = District.objects.get(district=district).district_id
+            qa.add(Q(district_fk=district_id), qa.AND)
+            if commune:
+                commune_id = CommuneClinic.objects.get(commune_clinic=commune).commune_clinic_id
+                qa.add(Q(commune_clinic_fk=commune_id), qa.AND)
+        area = Area.objects.filter(qa).values('area_id')
+        q.add(Q(area_fk__in=area), q.AND)
+
     if school_id:
         q.add(Q(student_fk__school_fk=school_id), q.AND)
     else:
@@ -423,12 +441,7 @@ def CheckUpDownList(request):
 
 
     checkup_serializer = CheckUpDownSerializer(checkup,many=True).data
-    checkup_serializer = checkup_serializer.values('school_id','school_name','student_name',
-               'grade','class','student_number','medical_insurance_number','date_of_birth','age',
-                  'gender','height','weight','vision_left',
-               'vision_right','glasses','corrected_left',
-               'corrected_right','dental','hearing',
-               'systolic','diastolic','bust','date','bmi')
+
 
     #print(checkup_serializer)
 

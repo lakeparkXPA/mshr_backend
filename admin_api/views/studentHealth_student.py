@@ -146,11 +146,31 @@ def student_listDownload(request):
     school_id = request_json.get('school_id','')
     grade = request_json.get('grade','')
     name_id = request_json.get('name','')
+    province = request_json.get('province')
+    district = request_json.get('district')
+    commune = request_json.get('commune')
+
+
 
 
     q = Q()
     data = {}
     header = {}
+
+
+    if province:
+        qa = Q()
+        province_id = Province.objects.get(province=province).province_id
+        qa.add(Q(province_fk=province_id), qa.AND)
+        if district:
+            district_id = District.objects.get(district=district).district_id
+            qa.add(Q(district_fk=district_id), qa.AND)
+            if commune:
+                commune_id = CommuneClinic.objects.get(commune_clinic=commune).commune_clinic_id
+                qa.add(Q(commune_clinic_fk=commune_id), qa.AND)
+        area = Area.objects.filter(qa).values('area_id')
+        q.add(Q(area_fk__in=area), q.AND)
+
     """필터링 조건으로 조회할 경우"""
     if school_id or grade or name_id:
 
@@ -457,13 +477,14 @@ def student_get(request,student_id):
 
 
 
-    student_obj = Student.objects.get(student_id=student_id)
-    student_serializer = AddStudentSerializer(student_obj).data
+    student_obj = Student.objects.select_related('school_fk').filter(student_id=student_id).\
+        values('student_name', 'grade', 'grade_class', 'gender', 'date_of_birth', 'student_number', 'village', 'contact',
+               'parents_name', 'school_fk__school_name')
+
     #print(student_serializer)
 
-    student_serializer.pop('pic')
 
-    data['info'] = student_serializer
+    data['info'] = student_obj
 
     header['HTTP_X_CSTATUS'] = 0
     print("student_detail")

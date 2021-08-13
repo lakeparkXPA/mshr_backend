@@ -305,13 +305,12 @@ class CheckUpDownSerializer(serializers.ModelSerializer):
             total_data['student_number'] = student['student_number']
             total_data['medical_insurance_number'] = student['medical_insurance_number']
             total_data['date_of_birth'] =student['date_of_birth']
-            total_data['gender'] = student['gender']
-            total_data.update(data)
-
-
             birth_year =datetime.datetime.strptime(total_data['date_of_birth'],"%Y-%m-%d").year
             cur_year = datetime.datetime.today().year
             total_data['age'] = cur_year-birth_year+1
+            total_data['gender'] = student['gender']
+            total_data.update(data)
+
             if total_data['height'] == '' or total_data['weight'] == '':
                 total_data['bmi'] = 0
             else:
