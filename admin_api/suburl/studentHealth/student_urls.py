@@ -7,6 +7,7 @@ urlpatterns=[
     path('schoolList', studentHealth_student.school_list),
     path('addStudent', studentHealth_student.student_add),
     path('addStudent/min', studentHealth_student.min_check),
+    # path('addStudents', studentHealth_student.StudentAddAll.as_view()),
     path('addStudents', studentHealth_student.student_addAll),
     path('modiStudent/<int:student_id>', studentHealth_student.student_get),
     path('modiStudentImg/<int:student_id>', studentHealth_student.student_get_img),

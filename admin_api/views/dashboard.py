@@ -8,7 +8,6 @@ from django.db.models import Count, Avg
 from admin_api.permissions import *
 from admin_api.serializers import *
 
-from mshr_backend.settings import STATIC_DIR
 from admin_api.custom import *
 from django.db import connection
 import json
@@ -60,7 +59,7 @@ def dashboard_info(request):
                     select_related('student_fk__school_fk__area_fk').\
                     select_related('student_fk__school_fk__area_fk__province_fk').\
                     select_related('student_fk__school_fk__area_fk__district_fk').\
-                    select_related('student_fk__school_fk__area_fk__commune_clinic_fk').filter(q)
+                    select_related('student_fk__school_fk__area_fk__commune_clinic_fk').filter(q).exclude(student_fk__isnull=True)
 
     """건강검진받은 전체 인원"""
     print(checkup_set.count())

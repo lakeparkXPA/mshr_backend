@@ -102,7 +102,7 @@ def notice_add(request):
     notice.user_name = user_name
     notice.user_fk = user_fk
     notice.field = contents
-    notice.create_time = timezone.localtime()
+    notice.create_time = datetime.datetime.utcnow()
 
     notice.save()
 
@@ -121,7 +121,7 @@ def notice_add(request):
 
     log(request, typ='Add Notice', content='Insert Notice ' + user_id)
 
-    res = Response(status=HTTP_200_OK)
+    res = Response({"response": response},status=HTTP_200_OK)
     res['HTTP_X_CSTATUS'] = 0
     return res
 
@@ -167,7 +167,7 @@ def notice_file(request):
 
     except Exception as e:
         res = Response(status=HTTP_400_BAD_REQUEST)
-        res['HTTP_X_CSTATUS'] = int(str(e))
+        res['HTTP_X_CSTATUS'] = str(e)
         return res
 
 
@@ -189,7 +189,7 @@ def notice_edit(request):
             notice.user_name = user_name
             notice.user_fk = user_fk
             notice.field = contents
-            notice.create_time = timezone.localtime()
+            notice.create_time = datetime.datetime.utcnow()
 
             notice.save()
         except:

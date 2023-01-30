@@ -8,6 +8,7 @@ from rest_framework import permissions
 from admin_api.package.log import log
 from admin_api.permissions import *
 
+
 @api_view(['POST'])
 @permission_classes((IsMaster,))
 def school_lst(request):

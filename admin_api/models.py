@@ -168,7 +168,7 @@ class Student(models.Model):
     school_fk = models.ForeignKey(School, models.DO_NOTHING, db_column='school_fk')
     student_name = models.CharField(max_length=30)
     grade = models.IntegerField()
-    grade_class = models.CharField(max_length=10)
+    grade_class = models.CharField(max_length=30)
     gender = models.CharField(max_length=5)
     date_of_birth = models.DateField()
     student_number = models.CharField(max_length=30, blank=True, null=True)

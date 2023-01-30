@@ -23,7 +23,6 @@ from rest_framework_jwt.views import obtain_jwt_token
 from rest_framework.parsers import MultiPartParser
 import bcrypt
 from mshr_backend.settings import ALGORITHM, SECRET_KEY, BASE_DIR
-from mshr_backend.settings import STATIC_DIR
 from admin_api.custom import *
 from django.db import connection
 import pandas as pd
@@ -88,7 +87,7 @@ def refresh_token(request):
         payload['auth'] = 'access'
 
         payload['exp'] = datetime.datetime.utcnow() + \
-                        datetime.timedelta(hours=1)
+                        datetime.timedelta(hours=24)
 
         access_token = jwt.encode(payload, SECRET_KEY, ALGORITHM)
 

@@ -3,7 +3,6 @@ from django.db.models import Q, F
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
-from rest_framework import permissions
 
 from admin_api.package.log import log
 from admin_api.permissions import *
@@ -141,7 +140,7 @@ def user_add(request):
     elif user_level == 1:
         area_id = Area.objects.filter(
             Q(province_fk__province__exact=province)
-        ).exclude(district_fk__isnull=False).first()
+        ).exclude(district_fk__isnull=True).first()
 
         user_insert.area_fk = area_id
 
@@ -149,7 +148,7 @@ def user_add(request):
         area_id = Area.objects.filter(
             Q(province_fk__province__exact=province) &
             Q(district_fk__district__exact=district)
-        ).exclude(commune_clinic_fk__isnull=False).first()
+        ).exclude(commune_clinic_fk__isnull=True).first()
 
         user_insert.area_fk = area_id
 
@@ -327,7 +326,7 @@ def user_remove(request, pk):
         user_pk = User.objects.get(user_id__exact=pk).id
         user_del = User.objects.get(id=user_pk)
         user_del.delete()
-        # TODO---- Enable block later
+
         log(request, typ='Delete user', content='Delete user ' + str(pk))
         res = Response(status=HTTP_200_OK)
         res['HTTP_X_CSTATUS'] = 0

@@ -18,7 +18,7 @@ import json
 from django.db import transaction
 import numpy as np
 
-
+from rest_framework import permissions
 
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
@@ -396,7 +396,7 @@ def CheckUpDownList(request):
                 commune_id = CommuneClinic.objects.get(commune_clinic=commune).commune_clinic_id
                 qa.add(Q(commune_clinic_fk=commune_id), qa.AND)
         area = Area.objects.filter(qa).values('area_id')
-        q.add(Q(area_fk__in=area), q.AND)
+        q.add(Q(student_fk__school_fk__area_fk__in=area), q.AND)
 
     if school_id:
         q.add(Q(student_fk__school_fk=school_id), q.AND)
@@ -413,8 +413,8 @@ def CheckUpDownList(request):
         else:
             area = User.objects.select_related('area_fk').get(user_id__exact=user_id).area_fk.district_fk
             area_id = Area.objects.filter(Q(district_fk__exact=area)).values('area_id')
-            school_id = School.objects.filter(area_fk__in=area_id).id
-            q.add(Q(student_fk__school_fk=school_id), q.AND)
+            school_id = School.objects.filter(area_fk__in=area_id).values('school_id')
+            q.add(Q(student_fk__school_fk__in=school_id), q.AND)
 
     if grade and grade != 0:
         q.add(Q(student_fk__grade=grade),q.AND)
@@ -434,7 +434,7 @@ def CheckUpDownList(request):
 
     except Exception as e:
         header['HTTP_X_CSTATUS'] = 1
-        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+        return Response({"error":str(e)},headers=header,status=HTTP_400_BAD_REQUEST)
         #raise exceptions.ValidationError(data)
     #print(checkup)
 
@@ -468,12 +468,12 @@ def CheckUpDownList(request):
     #headef font are bold
     font_style.font.bold = True
 
-    columns = ['School ID','School Name','Student Name',
+    columns = ['Check up Date','School ID','School Name','Student Name',
                'Grade','Class','Student Number','MIN','Date Of Birth','Age',
                   'Gender','Height','Weight','Vision left',
                'Vision right','Glasses','Corrected left',
                'Corrected right','Dental','Hearing',
-               'Systolic','Diastolic','Bust','Date','Bmi']
+               'Systolic','Diastolic','Bust','Bmi']
 
     for idx,col_name in enumerate(columns):
         #print(row_num,idx,col_name,font_style)

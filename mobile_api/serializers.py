@@ -88,14 +88,13 @@ class GetStudentsSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         field_list = [field.name for field in Student._meta.get_fields()]
-        field_list.remove('student_id')
         field_list.remove('pic')
         field_list.remove('school_fk')
         field_list.remove('checkup')
         for field in  field_list:
             print(field)
         data = super().to_representation(instance)
-        data.pop('student_id')
+
         data.pop('pic')
         data.pop('school_fk')
 

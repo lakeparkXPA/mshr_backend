@@ -5,7 +5,7 @@ from admin_api.views import studentHealth_student, dashboard
 from admin_api import views
 from admin_api.views import area
 from admin_api.suburl import *
-app_name= 'admin_api'
+app_name = 'admin_api'
 
 urlpatterns=[
 

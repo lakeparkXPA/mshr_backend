@@ -6,9 +6,9 @@ from django.http import FileResponse, JsonResponse, HttpResponse
 import xlwt
 
 from rest_framework.decorators import *
-
+from rest_framework import generics
 from rest_framework.status import *
-
+from rest_framework.permissions import *
 from admin_api.permissions import *
 from admin_api.serializers import *
 from admin_api.package.log import *
@@ -68,7 +68,7 @@ def student_list(request):
             q.add(Q(grade=grade),q.AND)
 
         if name_id:
-            q.add(Q(student_name=name_id) | Q(medical_insurance_number=name_id),q.AND)
+            q.add(Q(student_name__contains=name_id) | Q(medical_insurance_number__contains=name_id),q.AND)
 
         try:
             students_obj = Student.objects.select_related('school_fk').\
@@ -134,6 +134,7 @@ def student_list(request):
 
     return Response(student_list,headers=header,status=HTTP_200_OK)
 
+
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def student_listDownload(request):
@@ -169,7 +170,7 @@ def student_listDownload(request):
                 commune_id = CommuneClinic.objects.get(commune_clinic=commune).commune_clinic_id
                 qa.add(Q(commune_clinic_fk=commune_id), qa.AND)
         area = Area.objects.filter(qa).values('area_id')
-        q.add(Q(area_fk__in=area), q.AND)
+        q.add(Q(school_fk__area_fk__in=area), q.AND)
 
     """필터링 조건으로 조회할 경우"""
     if school_id or grade or name_id:
@@ -279,23 +280,21 @@ def student_listDownload(request):
     #headef font are bold
     font_style.font.bold = True
 
-    columns = ['Student ID','Name','School ID','School Name','Grade','Class','Student Number','DOB',
+    columns = ['Name','School ID','School Name','Grade','Class','Student Number','DOB',
                   'Gender','MIN','Village','Contact','Parents']
 
     for idx, col_name in enumerate(columns):
         ws.write(row_num,idx,col_name,font_style)
 
     student_list = students_obj.annotate(school_id=F('school_fk__school_id'), school_name=F('school_fk__school_name')).\
-        values_list('student_id', 'student_name', 'school_id', 'school_name','grade', 'grade_class', 'student_number',
+        values_list('student_name', 'school_id', 'school_name','grade', 'grade_class', 'student_number',
                'date_of_birth', 'gender', 'medical_insurance_number', 'village', 'contact','parents_name')
-
-    if len(student_list) == 1:
-        data_students = [student_list]
-    else:
-        data_students = student_list
-    for row in data_students:
+    # if len(student_list):
+    for row in student_list:
         row_num+=1
-        for col,value in enumerate(row):
+        row_to_lst = list(row)
+        row_to_lst[-6] = str(row_to_lst[-6])
+        for col,value in enumerate(row_to_lst):
             ws.write(row_num,col,value)
 
 
@@ -392,6 +391,7 @@ def school_list(request):
 
     return Response(data, headers=header,status=HTTP_200_OK)
 
+
 @api_view(['POST'])
 @permission_classes([AllAuthenticated])
 def student_add(request):
@@ -478,7 +478,7 @@ def student_get(request,student_id):
 
 
     student_obj = Student.objects.select_related('school_fk').filter(student_id=student_id).\
-        values('student_name', 'grade', 'grade_class', 'gender', 'date_of_birth', 'student_number', 'village', 'contact',
+        values('student_id', 'student_name', 'school_fk', 'grade', 'grade_class', 'gender', 'date_of_birth', 'student_number', 'village', 'contact',
                'parents_name', 'medical_insurance_number', school_id=F('school_fk__school_id'),
                school_name=F('school_fk__school_name'))
 
@@ -507,13 +507,12 @@ def student_get_img(request,student_id):
         header['HTTP_X_CSTATUS'] = 1
         return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
-
-    student_pic = Student.objects.get(student_id=student_id).pic
-    if student_pic is None:
+    try:
+        student_pic = Student.objects.get(student_id=student_id).pic
+        return FileResponse(student_pic,headers=header,status=HTTP_200_OK)
+    except:
         header['HTTP_X_CSTATUS'] = 0
-        return Response(headers=header,status=HTTP_200_OK)
-
-    return FileResponse(student_pic,headers=header,status=HTTP_200_OK)
+        return Response(headers=header, status=HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -725,9 +724,9 @@ def student_delete_multi(request):
             if graduate_serializer.is_valid():
                 with transaction.atomic():
                     graduate_serializer.save()
-
+                    grad_save = graduate_serializer.data['graduate_id']
                     graduate_obj = Graduate.objects.\
-                                    get(medical_insurance_number=min)
+                                    get(graduate_id=grad_save)
                     for checkup in checkup_set:
                         checkup.graduate_fk = graduate_obj
                         checkup.save()
@@ -738,7 +737,7 @@ def student_delete_multi(request):
         except Exception as e:
             #data['status'] = 1
             header['HTTP_X_CSTATUS'] = 1
-            return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+            return Response({"error":str(e)}, headers=header,status=HTTP_400_BAD_REQUEST)
 
 
 
@@ -858,20 +857,20 @@ def student_delete_multi(request):
 #
 #     return Response()
 
-@api_view(['POST'])
-@permission_classes([AllAuthenticated])
-def student_addAll(request):
 
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny,])
+def student_addAll(request):
     """학생 일괄 등록 excel 파일 파싱 후 저장"""
 
     file = request.FILES.get('file','')
 
     res = {}
     header = {}
-    if not file:
-        res['status'] = 1
-        header['HTTP_X_CSTATUS'] = 1
-        return Response(headers=header,status=HTTP_400_BAD_REQUEST)
+    # if not file:
+    #     res['status'] = 1
+    #     header['HTTP_X_CSTATUS'] = 1
+    #     return Response(headers=header,status=HTTP_400_BAD_REQUEST)
 
 
     print(file)
@@ -881,59 +880,46 @@ def student_addAll(request):
     file_check = file_check.split('.')
 
     if file_check[-1] =='xlsx':
-        df = pd.read_excel(file,engine='openpyxl')
+        df = pd.read_excel(file,engine='openpyxl', converters={'Contact': str})
     else:
-        df = pd.read_excel(file)
+        df = pd.read_excel(file, converters={'Contact': str})
 
+    df.columns = ['student_name', 'school_fk', 'school_name',
+                  'grade', 'grade_class', 'student_number', 'date_of_birth',
+                  'gender', 'medical_insurance_number', 'village', 'contact', 'parents_name']
 
+    school_id_list = list(set(df['school_fk']))
 
-    #df = df.drop(['No'],axis=1)
-    print("df")
-    print(df)
-    school_id_list = list(set(df['School ID']))
-    print("school_id list")
-    print(school_id_list)
     df = df.rename({})
     for school_id in school_id_list:
         school_fk = School.objects.filter(school_id=school_id).values('id').first()
-        #print(connection.queries)
 
-        df['School ID'] = df['School ID'].apply(lambda x:school_fk['id'] if x==school_id else x)
 
-    print("test 지점")
+        df['school_fk'] = df['school_fk'].apply(lambda x:school_fk['id'] if x==school_id else x)
 
-    df.columns = ['school_fk','student_id','student_name',
-                  'grade','grade_class','student_number','date_of_birth',
-                  'gender','medical_insurance_number','village','contact','parents_name']
     df = df.replace(np.NAN,'')
-    df['gender'] = df['gender'].replace({'Nam': 'm', 'Nữ': 'f'})
-    print("df test 22")
-    print(df)
+    df['date_of_birth'] = pd.DatetimeIndex(df.date_of_birth).normalize()
 
-    bulk_list = []
-    bulk_fk_list = []
-    #print(df.to_dict())
+    df['gender'] = df['gender'].replace({'Nam': 'm', 'Nữ': 'f', 'M':'m', 'F': 'f'})
 
-    for i in df.index:
-        data = {}
-        #student = Student()
-        for j, k in enumerate(df.columns):
-            #print(k)
-            #student.k = df.values[i][j]
-            if k =='date_of_birth':
-                data[k] = datetime.datetime.strptime(df.values[i][j],"%Y-%m-%d").date()
 
-            else:
-                data[k] = df.values[i][j]
-        if data['medical_insurance_number'] not in list(Student.objects.values_list('medical_insurance_number', flat=True)):
-            student_obj = AddStudentSerializer(data=data,partial=True)
+    dupli_min_lst = []
+    dupli_name_lst = []
+    for index, row in df.iterrows():
+        row['date_of_birth'] = row['date_of_birth'].date()
+        student_min_lst = list(Student.objects.values_list('medical_insurance_number', flat=True))
+        if str(row['medical_insurance_number']) not in student_min_lst:
+            student_obj = AddStudentSerializer(data=dict(row), partial=True)
 
             if student_obj.is_valid():
                 student_obj.save()
+                student_min_lst.append(row['medical_insurance_number'])
             else:
-                print(student_obj.errors)
-
-
+                dupli_min_lst.append(row['medical_insurance_number'])
+                dupli_name_lst.append(row['student_name'])
+        else:
+            dupli_min_lst.append(row['medical_insurance_number'])
+            dupli_name_lst.append(row['student_name'])
 
 
     log(request,typ='Upload Student',
@@ -941,4 +927,4 @@ def student_addAll(request):
 
     res['status'] = 0
     header['HTTP_X_CSTATUS'] = 0
-    return Response(headers=header,status=HTTP_201_CREATED)
+    return Response({'student_lst': dupli_name_lst, 'min_lst': dupli_min_lst}, headers=header, status=HTTP_201_CREATED)
