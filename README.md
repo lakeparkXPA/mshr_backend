@@ -1,8 +1,9 @@
 # mSHR Backend
 Project BOM의 베트남 학교에서 신체검사 측정을 돕기 위한 웹앱으로 지역별 학교에서 기기를 두고 계측이 끝나면 학생들 정보가 담긴 qr 코드를 통해 입력해서 모든 계측이 끝나면 저장. 또한 관리자 페이지에서 지역, 학교별 학생들 계측의 dashboard 제공.
 
-서버는 EC2, RDS 를 사용하고 분산처리를 위해 ELB-ALB 를 사용하고, 보안을 위해 VPC 안에 EC2를 public subnet 에 두고 RDS 를 private subnet 에 두어 EC2 통해서만 접근이 가능. 
-배포는 nGinx gUnicorn 을 사용. 
+* 서버는 EC2, RDS 를 사용하고 분산처리를 위해 ELB-ALB 를 사용하고
+* 보안을 위해 VPC 안에 EC2를 public subnet 에 두고 RDS 를 private subnet 에 두어 EC2 통해서만 접근이 가능
+* 배포는 nGinx gUnicorn 을 사용
 
 ## mobile_api
 학교측 기기 api
